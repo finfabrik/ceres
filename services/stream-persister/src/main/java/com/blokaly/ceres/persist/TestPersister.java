@@ -55,12 +55,13 @@ public class TestPersister extends AbstractIdleService {
     if (!stop) {
       Point.Builder builder = Point.measurement("stream").time(System.nanoTime(), TimeUnit.NANOSECONDS).tag(tags);
       boolean hasValue = false;
-      String bids = getLadders();
+      int mid = 20 + rand.nextInt(10);
+      String bids = getLadders(mid, false);
       if (bids != null) {
         builder.addField("bids", bids);
         hasValue = true;
       }
-      String asks = getLadders();
+      String asks = getLadders(mid, true);
       if (asks != null) {
         builder.addField("asks", asks);
         hasValue = true;
@@ -72,20 +73,22 @@ public class TestPersister extends AbstractIdleService {
 
       try {
         LOGGER.info("Persisting ladders to influxdb");
-        writer.write(builder.build());
-        LOGGER.info("Persisted");
+        Point point = builder.build();
+        writer.write(point);
+        LOGGER.info("Persisted: {}", point);
       } catch (Exception ex) {
         LOGGER.error("Error writing to influxdb", ex);
       }
     }
   }
 
-  private String getLadders() {
+  private String getLadders(int mid, boolean increment) {
     if (rand.nextBoolean()) {
       JsonArray ladders = new JsonArray();
       for (int i = 0; i < 10; i++) {
+        mid = increment ? mid + 1 : mid - 1;
         JsonArray ladder = new JsonArray();
-        ladder.add(rand.nextDouble());
+        ladder.add(mid + rand.nextDouble());
         ladder.add(rand.nextDouble());
         ladders.add(ladder);
       }
