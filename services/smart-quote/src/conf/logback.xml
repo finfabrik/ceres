@@ -3,7 +3,7 @@
     <appender name="MainFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.root}/${log.name}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${log.name}/${log.name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${log.root}/${log.name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>500MB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
@@ -16,7 +16,7 @@
     <appender name="MonitorFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.root}/${log.name}-monitor.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${log.name}/${log.name}-monitor-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${log.root}/${log.name}-monitor-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>500MB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>

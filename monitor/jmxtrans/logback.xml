@@ -3,7 +3,7 @@
     <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/var/log/jmxtrans/${log.name}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${log.name}/${log.name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${log.root}/${log.name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>500MB</maxFileSize>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
