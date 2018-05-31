@@ -35,7 +35,7 @@ public class InfoEvent extends AbstractEvent {
     @Override
     public String toString() {
         return "InfoEvent{" +
-                ", version=" + version +
+                "version=" + version +
                 ", code=" + code +
                 ", msg=" + msg +
                 '}';

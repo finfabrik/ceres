@@ -48,6 +48,7 @@ public class MessageHandlerImpl implements MessageHandler {
 
     @Override
     public void onMessage(InfoEvent event) {
+        LOGGER.info("Received info {}", event);
         String version = event.getVersion();
         if (version != null) {
             String[] vers = version.split("\\.");
@@ -57,16 +58,16 @@ public class MessageHandlerImpl implements MessageHandler {
             }
             subscribeAll();
         } else {
-            LOGGER.info("Received info {}", event);
             InfoEvent.Status status = event.getStatus();
             if (status == InfoEvent.Status.WEB_SOCKET_RESTART || status == InfoEvent.Status.PAUSE) {
+                LOGGER.warn("Status is {}, resetting orderbooks...", status);
                 bookKeeper.getAllBooks().forEach(book -> {
                     book.clear();
                     producer.publish(book);
                 });
             } else if (status == InfoEvent.Status.RESUME) {
-                //TODO unsub
-                subscribeAll();
+                LOGGER.warn("Status is {}, reconnect ws", status);
+                clientProvider.get().tryReconnect();
             }
         }
 

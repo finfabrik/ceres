@@ -18,6 +18,7 @@ public class BitfinexClient extends WebSocketClient {
     public interface ConnectionListener {
         void onConnected();
         void onDisconnected();
+        void reconnect();
     }
 
     public BitfinexClient(URI serverURI, JsonCracker cracker, ConnectionListener listener) {
@@ -31,7 +32,7 @@ public class BitfinexClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
-        LOGGER.info("ws open, status - {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
+        LOGGER.info("ws open - status {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
         if (listener != null) {
             listener.onConnected();
         }
@@ -47,9 +48,16 @@ public class BitfinexClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        LOGGER.info("ws close: {}", reason);
+        LOGGER.info("ws close - reason: {}", reason);
         if (listener != null) {
             listener.onDisconnected();
+        }
+    }
+
+    public void tryReconnect() {
+        LOGGER.info("ws reconnecting...");
+        if (listener != null) {
+            listener.reconnect();
         }
     }
 
