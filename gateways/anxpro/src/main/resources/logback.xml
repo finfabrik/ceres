@@ -1,6 +1,6 @@
 <configuration scan="true" debug="true">
 
-    <shutdownHook/>
+
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
