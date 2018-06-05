@@ -1,5 +1,6 @@
 package com.blokaly.ceres.gdax;
 
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.java_websocket.client.WebSocketClient;
@@ -16,15 +17,10 @@ public class GdaxClient extends WebSocketClient {
   private static Logger LOGGER = LoggerFactory.getLogger(GdaxClient.class);
   private volatile boolean stop = false;
   private final JsonCracker cracker;
-  private final ConnectionListener listener;
-
-  public interface ConnectionListener {
-    void onConnected();
-    void onDisconnected();
-  }
+  private final WSConnectionListener listener;
 
   @Inject
-  public GdaxClient(URI serverURI, JsonCracker cracker, ConnectionListener listener) {
+  public GdaxClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
     super(serverURI);
     this.cracker = cracker;
     this.listener = listener;
