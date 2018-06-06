@@ -1,19 +1,24 @@
 package com.blokaly.ceres.cex;
 
+import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import java.net.URI;
+import java.util.concurrent.ScheduledExecutorService;
 
-public class CexClientProvider implements Provider<CexClient>, CexClient.ConnectionListener {
+public class CexClientProvider extends WSConnectionAdapter implements Provider<CexClient> {
   private static Logger LOGGER = LoggerFactory.getLogger(CexClientProvider.class);
   private final CexClient client;
 
   @Inject
-  public CexClientProvider(Config config, URI serverURI, JsonCracker cracker) {
+  public CexClientProvider(Config config, URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
+    super(executorService);
     client = new CexClient(config, serverURI, cracker, this);
   }
 
@@ -22,14 +27,22 @@ public class CexClientProvider implements Provider<CexClient>, CexClient.Connect
     return client;
   }
 
-  @Override
-  public void onConnected() {
-    LOGGER.info("CexClient connected");
+  @PreDestroy
+  private void stop() {
+    diabled = true;
+    client.stop();
   }
 
   @Override
-  public void onDisconnected() {
-    LOGGER.info("CexClient disconnected, reconnecting...");
+  protected void establishConnection() {
+    LOGGER.info("CEX client reconnecting...");
     client.reconnect();
+  }
+
+  @Override
+  public void reconnect() {
+    if (!diabled) {
+      client.stop();
+    }
   }
 }

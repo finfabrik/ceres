@@ -53,7 +53,8 @@ public class CexService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping cex client...");
-    provider.get().close();
+    provider.get().stop();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }

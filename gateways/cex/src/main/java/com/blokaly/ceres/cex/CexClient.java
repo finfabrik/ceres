@@ -1,5 +1,6 @@
 package com.blokaly.ceres.cex;
 
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 import org.apache.commons.codec.binary.Hex;
@@ -20,15 +21,10 @@ public class CexClient extends WebSocketClient {
   private final String secret;
   private volatile boolean stop = false;
   private final JsonCracker cracker;
-  private final ConnectionListener listener;
-
-  public interface ConnectionListener {
-    void onConnected();
-    void onDisconnected();
-  }
+  private final WSConnectionListener listener;
 
   @Inject
-  public CexClient(Config config, URI serverURI, JsonCracker cracker, ConnectionListener listener) {
+  public CexClient(Config config, URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
     super(serverURI);
     this.cracker = cracker;
     this.listener = listener;
