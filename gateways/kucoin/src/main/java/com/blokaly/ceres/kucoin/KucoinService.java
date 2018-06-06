@@ -26,7 +26,6 @@ import org.knowm.xchange.kucoin.service.KucoinMarketDataServiceRaw;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -95,7 +94,6 @@ public class KucoinService extends BootstrapService{
             List<String> symbols = config.getStringList("symbols");
             int depth = config.getInt("depth");
             String source = Source.valueOf(config.getString(CommonConfigs.APP_SOURCE).toUpperCase()).getCode();
-            //String source = "";
             return symbols.stream().collect(Collectors.toMap(sym->sym, sym -> {
                 String symbol = SymbolFormatter.normalise(sym);
                 return new DepthBasedOrderBook(sym, depth, symbol + "." + source);

@@ -1,8 +1,6 @@
 package com.blokaly.ceres.kucoin;
 
 import com.blokaly.ceres.orderbook.DepthBasedOrderBook;
-import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
-import com.blokaly.ceres.orderbook.OrderBook;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

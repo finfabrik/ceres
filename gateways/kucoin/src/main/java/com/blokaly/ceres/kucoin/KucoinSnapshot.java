@@ -80,7 +80,7 @@ public class KucoinSnapshot implements MarketDataSnapshot<DepthBasedOrderInfo> {
 
         @Override
         public Side side() {
-            return null;
+            return side;
         }
 
         @Override
