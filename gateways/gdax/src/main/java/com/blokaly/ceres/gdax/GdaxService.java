@@ -54,7 +54,7 @@ public class GdaxService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping gdax client...");
-    provider.get().close();
+    provider.get().stop();
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }

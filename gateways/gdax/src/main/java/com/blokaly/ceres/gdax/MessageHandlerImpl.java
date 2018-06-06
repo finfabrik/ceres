@@ -10,6 +10,8 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+
 @Singleton
 public class MessageHandlerImpl implements MessageHandler {
 
@@ -29,7 +31,11 @@ public class MessageHandlerImpl implements MessageHandler {
 
   @Override
   public void onMessage(OpenEvent event) {
-    String jsonString = gson.toJson(new OrderBookEvent(bookKeeper.getAllSymbols()));
+    Collection<String> symbols = bookKeeper.getAllSymbols();
+    for (String symbol : symbols) {
+      bookKeeper.get(symbol).clear();
+    }
+    String jsonString = gson.toJson(new OrderBookEvent(symbols));
     LOGGER.info("subscribing: {}", jsonString);
     clientProvider.get().send(jsonString);
   }

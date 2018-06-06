@@ -1,4 +1,10 @@
-<configuration scan="true">
+<configuration scan="true" debug="true">
+
+
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
 
     <appender name="MainFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.root}/${log.name}.log</file>

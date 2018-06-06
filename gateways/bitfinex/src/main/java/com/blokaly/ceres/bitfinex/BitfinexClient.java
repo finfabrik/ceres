@@ -1,5 +1,6 @@
 package com.blokaly.ceres.bitfinex;
 
+import com.blokaly.ceres.network.WSConnectionListener;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -13,15 +14,9 @@ public class BitfinexClient extends WebSocketClient {
     private static Logger LOGGER = LoggerFactory.getLogger(BitfinexClient.class);
     private volatile boolean stop = false;
     private final JsonCracker cracker;
-    private final ConnectionListener listener;
+    private final WSConnectionListener listener;
 
-    public interface ConnectionListener {
-        void onConnected();
-        void onDisconnected();
-        void reconnect();
-    }
-
-    public BitfinexClient(URI serverURI, JsonCracker cracker, ConnectionListener listener) {
+    public BitfinexClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
         super(serverURI);
         this.cracker = cracker;
         this.listener = listener;
