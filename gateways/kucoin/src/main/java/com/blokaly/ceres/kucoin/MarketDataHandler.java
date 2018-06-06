@@ -52,9 +52,9 @@ public class MarketDataHandler {
     //Keeping it consistent for now
     private void pullMarketData(String sym){
         try{
-            KucoinResponse<KucoinOrderBook> orderbook = service.getKucoinOrderBook(new CurrencyPair(sym), depth);
-            LOGGER.debug("{}", orderbook);
-            KucoinSnapshot snapshot = KucoinSnapshot.parse(orderbook.getData());
+            KucoinResponse<KucoinOrderBook> kucoinOrderBook = service.getKucoinOrderBook(new CurrencyPair(sym), depth);
+            LOGGER.debug("{}", kucoinOrderBook);
+            KucoinSnapshot snapshot = KucoinSnapshot.parse(kucoinOrderBook.getData());
             DepthBasedOrderBook orderBook = keeper.get(sym);
             orderBook.processSnapshot(snapshot);
             producer.publish(orderBook);
