@@ -14,7 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Singleton
 public class GdaxClientProvider extends WSConnectionAdapter implements Provider<GdaxClient> {
-  private static Logger LOGGER = LoggerFactory.getLogger(GdaxClientProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GdaxClientProvider.class);
   private final GdaxClient client;
 
   @Inject

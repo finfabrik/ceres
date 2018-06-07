@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class MarketDataHandler {
-  private static Logger LOGGER = LoggerFactory.getLogger(MarketDataHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MarketDataHandler.class);
   private final KrakenMarketDataServiceRaw service;
   private final ScheduledExecutorService ses;
   private final OrderBookKeeper keeper;

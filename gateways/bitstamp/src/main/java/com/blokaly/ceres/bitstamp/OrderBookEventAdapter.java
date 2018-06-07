@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 
 public class OrderBookEventAdapter implements JsonDeserializer<OrderBookEvent> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(OrderBookEventAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookEventAdapter.class);
 
     @Override
     public OrderBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

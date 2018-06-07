@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class BinanceClientProvider extends WSConnectionAdapter implements Provider<Collection<BinanceClient>> {
-  private static Logger LOGGER = LoggerFactory.getLogger(BinanceClientProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BinanceClientProvider.class);
   private final String wsUrl;
   private final Gson gson;
   private final ToBProducer producer;

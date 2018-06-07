@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SingleJedis implements RedisClient {
-  private static Logger LOGGER = LoggerFactory.getLogger(SingleJedis.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SingleJedis.class);
   private final Jedis jedis;
   private final ExecutorService executor;
 

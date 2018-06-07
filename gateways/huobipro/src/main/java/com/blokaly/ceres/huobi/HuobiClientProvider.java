@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Singleton
 public class HuobiClientProvider extends WSConnectionAdapter implements Provider<HuobiClient> {
-  private static Logger LOGGER = LoggerFactory.getLogger(HuobiClientProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(HuobiClientProvider.class);
   private final HuobiClient client;
 
   @Inject

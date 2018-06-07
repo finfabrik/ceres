@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ValidatorService extends BootstrapService {
-  private static Logger LOGGER = LoggerFactory.getLogger(ValidatorService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ValidatorService.class);
   private final Undertow server;
   private final QuoteStore store;
 

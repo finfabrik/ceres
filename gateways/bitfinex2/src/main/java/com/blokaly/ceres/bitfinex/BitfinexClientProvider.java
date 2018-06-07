@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Singleton
 public class BitfinexClientProvider extends WSConnectionAdapter implements Provider<BitfinexClient> {
-  private static Logger LOGGER = LoggerFactory.getLogger(BitfinexClientProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BitfinexClientProvider.class);
   private final BitfinexClient client;
 
   @Inject

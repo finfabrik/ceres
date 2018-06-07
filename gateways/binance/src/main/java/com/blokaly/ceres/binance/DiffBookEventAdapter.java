@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 
 public class DiffBookEventAdapter implements JsonDeserializer<DiffBookEvent> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(DiffBookEventAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiffBookEventAdapter.class);
 
     @Override
     public DiffBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

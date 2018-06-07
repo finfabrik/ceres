@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import javax.jms.*;
 
 public class QueueConsumer {
-  private static Logger LOGGER = LoggerFactory.getLogger(QueueConsumer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(QueueConsumer.class);
   private final Session session;
   private final String queue;
   private final MessageListener listener;

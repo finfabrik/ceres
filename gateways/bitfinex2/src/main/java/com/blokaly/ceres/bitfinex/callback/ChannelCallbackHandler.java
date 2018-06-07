@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEvent>{
-    private static Logger LOGGER = LoggerFactory.getLogger(ChannelCallbackHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelCallbackHandler.class);
     @Override
     public ChannelEvent handleEvent(JsonElement json, JsonDeserializationContext context) {
         JsonArray data = json.getAsJsonArray();

@@ -13,7 +13,7 @@ import java.net.URI;
 
 public class BinanceClient extends WebSocketClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(BinanceClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BinanceClient.class);
   private volatile boolean stop = false;
   private final OrderBookHandler handler;
   private final Gson gson;

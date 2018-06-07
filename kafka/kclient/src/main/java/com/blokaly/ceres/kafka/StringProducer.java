@@ -13,7 +13,7 @@ import javax.annotation.PreDestroy;
 
 @Singleton
 public class StringProducer {
-  private static Logger LOGGER = LoggerFactory.getLogger(StringProducer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StringProducer.class);
   private final Producer<String, String> producer;
   private final String topic;
   private volatile boolean closing = false;

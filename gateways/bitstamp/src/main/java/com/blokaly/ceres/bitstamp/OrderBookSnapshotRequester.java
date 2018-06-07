@@ -9,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class OrderBookSnapshotRequester {
-    private static Logger LOGGER = LoggerFactory.getLogger(OrderBookSnapshotRequester.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookSnapshotRequester.class);
     private static final String ORDER_BOOK_URL = "https://www.bitstamp.net/api/v2/order_book/";
     private final URL url;
 

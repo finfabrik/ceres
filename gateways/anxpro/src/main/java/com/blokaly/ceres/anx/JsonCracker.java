@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class JsonCracker {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(JsonCracker.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JsonCracker.class);
   private final Gson gson;
   private final MessageHandler messageHandler;
 

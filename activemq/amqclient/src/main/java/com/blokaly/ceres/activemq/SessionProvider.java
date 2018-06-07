@@ -18,7 +18,7 @@ import javax.jms.Session;
 
 @Singleton
 public class SessionProvider implements Provider<Session>, ExceptionListener {
-  private static Logger LOGGER = LoggerFactory.getLogger(SessionProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SessionProvider.class);
   private final ActiveMQConnectionFactory connectionFactory;
   private final Boolean transact;
   private Connection connection;

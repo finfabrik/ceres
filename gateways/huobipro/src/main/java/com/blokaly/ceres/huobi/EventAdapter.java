@@ -17,7 +17,7 @@ import static com.blokaly.ceres.huobi.event.EventType.*;
 
 public class EventAdapter implements JsonDeserializer<WSEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
   private final Map<EventType, CommandCallbackHandler> handlers;
 
   private final NoOpEvent noOpEvent = new NoOpEvent();

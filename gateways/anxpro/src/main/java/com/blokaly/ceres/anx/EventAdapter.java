@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class EventAdapter implements JsonDeserializer<AbstractEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
   private final Map<EventType, CommandCallbackHandler> handlers;
 
   private final NoOpEvent noOpEvent = new NoOpEvent();

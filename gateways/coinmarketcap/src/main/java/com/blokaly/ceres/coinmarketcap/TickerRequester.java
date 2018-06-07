@@ -11,7 +11,7 @@ import java.net.URL;
 
 @Singleton
 public class TickerRequester {
-  private static Logger LOGGER = LoggerFactory.getLogger(TickerRequester.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TickerRequester.class);
   private static final String COINMARKETCAP_TICKER_API = "https://api.coinmarketcap.com/v1/ticker/?limit=0";
   private final URL url;
 

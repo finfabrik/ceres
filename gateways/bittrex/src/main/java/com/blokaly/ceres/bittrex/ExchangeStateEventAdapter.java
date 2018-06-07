@@ -11,7 +11,7 @@ import static com.blokaly.ceres.bittrex.JsonKey.Nonce;
 
 public class ExchangeStateEventAdapter implements JsonDeserializer<ExchangeStateEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ExchangeStateEventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeStateEventAdapter.class);
 
   @Override
   public ExchangeStateEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

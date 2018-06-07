@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class MockModule extends AbstractModule {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(MockModule.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockModule.class);
 
     @Override
     protected void configure() {

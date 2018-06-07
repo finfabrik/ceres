@@ -14,7 +14,7 @@ import javax.jms.TextMessage;
 @Singleton
 public class TextMessageForwarder implements MessageListener {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(TextMessageForwarder.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TextMessageForwarder.class);
   private final StringProducer producer;
 
   @Inject

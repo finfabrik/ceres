@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 
 @Singleton
 public class KafkaChannel implements Channel<String> {
-  private static Logger LOGGER = LoggerFactory.getLogger(KafkaChannel.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(KafkaChannel.class);
   private final Consumer<String, String> consumer;
   private final ExecutorService executorService;
   private volatile boolean enabled;

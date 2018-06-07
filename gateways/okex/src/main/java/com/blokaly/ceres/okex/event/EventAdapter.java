@@ -8,7 +8,7 @@ import java.lang.reflect.Type;
 
 public class EventAdapter implements JsonDeserializer<ChannelEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EventAdapter.class);
 
   private final NoOpEvent noOpEvent = new NoOpEvent();
 

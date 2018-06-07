@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HBProducer {
-  private static Logger LOGGER = LoggerFactory.getLogger(HBProducer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(HBProducer.class);
   private final Producer<String, String> producer;
   private final String topic;
   private final String key;

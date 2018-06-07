@@ -14,7 +14,7 @@ import java.util.List;
 
 @Singleton
 public class QuoteStore implements Channel.Subscriber<String> {
-  private static Logger LOGGER = LoggerFactory.getLogger(QuoteStore.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(QuoteStore.class);
   private static final int EXPIRE_SECONDS = 300;
   private final KafkaChannel channel;
   private final RedisClient redis;

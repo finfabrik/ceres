@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 public class ToBProducer {
-  private static Logger LOGGER = LoggerFactory.getLogger(ToBProducer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ToBProducer.class);
   private static final int BOOK_DEPTH = 5;
   private final Producer<String, String> producer;
   private final Gson gson;

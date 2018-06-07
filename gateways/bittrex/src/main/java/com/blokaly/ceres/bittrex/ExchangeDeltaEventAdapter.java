@@ -12,7 +12,7 @@ import static com.blokaly.ceres.bittrex.JsonKey.Nonce;
 
 public class ExchangeDeltaEventAdapter implements JsonDeserializer<ExchangeDeltaEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ExchangeDeltaEventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeDeltaEventAdapter.class);
 
   @Override
   public ExchangeDeltaEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

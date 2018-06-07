@@ -2,6 +2,7 @@ package com.blokaly.ceres.okcoin;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.common.Source;
@@ -29,11 +30,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class OKCoinService extends BootstrapService {
-  private final Provider<OKCoinClient> provider;
+  private final OKCoinClientProvider provider;
   private final KafkaStreams streams;
 
   @Inject
-  public OKCoinService(Provider<OKCoinClient> provider, @Named("Throttled") KafkaStreams streams) {
+  public OKCoinService(OKCoinClientProvider provider, @Named("Throttled") KafkaStreams streams) {
     this.provider = provider;
     this.streams = streams;
   }
@@ -41,7 +42,7 @@ public class OKCoinService extends BootstrapService {
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting OKCoin client...");
-    provider.get().connect();
+    provider.start();
 
     waitFor(3);
     LOGGER.info("starting kafka streams...");
@@ -51,7 +52,8 @@ public class OKCoinService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping OKCoin client...");
-    provider.get().close();
+    provider.stop();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }
@@ -68,7 +70,9 @@ public class OKCoinService extends BootstrapService {
       expose(KafkaStreams.class).annotatedWith(Names.named("Throttled"));
 
       bind(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
-      bindExpose(OKCoinClient.class).toProvider(OKCoinClientProvider.class).in(Singleton.class);
+      bindExpose(OKCoinClientProvider.class).asEagerSingleton();
+      bind(WSConnectionListener.class).to(OKCoinClientProvider.class);
+      bindExpose(OKCoinClient.class).toProvider(OKCoinClientProvider.class);
     }
 
     @Provides

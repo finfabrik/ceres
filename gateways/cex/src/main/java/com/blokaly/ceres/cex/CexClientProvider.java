@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class CexClientProvider extends WSConnectionAdapter implements Provider<CexClient> {
-  private static Logger LOGGER = LoggerFactory.getLogger(CexClientProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CexClientProvider.class);
   private final CexClient client;
 
   @Inject

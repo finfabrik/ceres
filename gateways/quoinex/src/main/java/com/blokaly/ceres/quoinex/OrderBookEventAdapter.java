@@ -19,7 +19,7 @@ public abstract class OrderBookEventAdapter {
 
   private OrderBookEventAdapter(){}
 
-  private static Logger LOGGER = LoggerFactory.getLogger(OrderBookEventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookEventAdapter.class);
 
   public static class BuySideOrderBookEventAdapter implements JsonDeserializer<BuyOrderBookEvent> {
     @Override

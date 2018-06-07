@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 
 public class TickerEventAdapter implements JsonDeserializer<TickerEvent> {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(TickerEventAdapter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TickerEventAdapter.class);
 
   @Override
   public TickerEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

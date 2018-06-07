@@ -14,7 +14,7 @@ import java.util.List;
 @Singleton
 public class AnxSocketIOClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(AnxSocketIOClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AnxSocketIOClient.class);
   private static final String PRIVATE = "private/";
   private static final String TOPIC_PREFIX = "public/orderBook/ANX/";
   private static final String SUBSCRIBE = "subscribe";

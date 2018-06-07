@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StreamPersistService extends AwaitExecutionService {
-    private static Logger LOGGER = LoggerFactory.getLogger(StreamPersistService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamPersistService.class);
     private InfluxDB influxDB;
     private final TestPersister testPersister;
 

@@ -21,7 +21,7 @@ import java.util.Base64;
 @Singleton
 public class AnxRestClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(AnxRestClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AnxRestClient.class);
   private static final String HMAC_SHA512 = "HmacSHA512";
 
   private final String host;

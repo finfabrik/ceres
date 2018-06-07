@@ -1,18 +1,22 @@
 package com.blokaly.ceres.okex;
 
+import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.concurrent.ScheduledExecutorService;
 
-public class OKExClientProvider implements Provider<OKExClient>, OKExClient.ConnectionListener {
-  private static Logger LOGGER = LoggerFactory.getLogger(OKExClientProvider.class);
+public class OKExClientProvider extends WSConnectionAdapter implements Provider<OKExClient> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(OKExClientProvider.class);
   private final OKExClient client;
 
   @Inject
-  public OKExClientProvider(URI serverURI, JsonCracker cracker) {
+  public OKExClientProvider(URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
+    super(executorService);
     client = new OKExClient(serverURI, cracker, this);
   }
 
@@ -21,14 +25,26 @@ public class OKExClientProvider implements Provider<OKExClient>, OKExClient.Conn
     return client;
   }
 
-  @Override
-  public void onConnected() {
-    LOGGER.info("OKEx client connected");
+  public void start() {
+    diabled = false;
+    client.connect();
+  }
+
+  public void stop() {
+    diabled = true;
+    client.stop();
   }
 
   @Override
-  public void onDisconnected() {
-    LOGGER.info("OKEx client disconnected, reconnecting...");
+  protected void establishConnection(String id) {
+    LOGGER.info("{} reconnecting...", id);
     client.reconnect();
+  }
+
+  @Override
+  public void reconnect(String id) {
+    if (!diabled) {
+      client.stop();
+    }
   }
 }

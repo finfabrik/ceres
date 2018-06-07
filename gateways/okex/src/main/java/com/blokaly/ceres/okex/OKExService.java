@@ -2,6 +2,7 @@ package com.blokaly.ceres.okex;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.common.Source;
@@ -29,12 +30,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class OKExService extends BootstrapService {
-  private final Provider<OKExClient> provider;
+  private final OKExClientProvider provider;
   private final KafkaStreams streams;
   private static final Pattern SPOT_SUB_PATTERN =Pattern.compile("ok_sub_spot_([a-z]+)_([a-z]+)_depth");
 
   @Inject
-  public OKExService(Provider<OKExClient> provider, @Named("Throttled") KafkaStreams streams) {
+  public OKExService(OKExClientProvider provider, @Named("Throttled") KafkaStreams streams) {
     this.provider = provider;
     this.streams = streams;
   }
@@ -42,7 +43,7 @@ public class OKExService extends BootstrapService {
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting OKEx client...");
-    provider.get().connect();
+    provider.start();
 
     waitFor(3);
     LOGGER.info("starting kafka streams...");
@@ -52,7 +53,8 @@ public class OKExService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping OKEx client...");
-    provider.get().close();
+    provider.stop();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }
@@ -69,7 +71,9 @@ public class OKExService extends BootstrapService {
       expose(KafkaStreams.class).annotatedWith(Names.named("Throttled"));
 
       bind(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
-      bindExpose(OKExClient.class).toProvider(OKExClientProvider.class).in(Singleton.class);
+      bindExpose(OKExClientProvider.class).asEagerSingleton();
+      bind(WSConnectionListener.class).to(OKExClientProvider.class);
+      bindExpose(OKExClient.class).toProvider(OKExClientProvider.class);
     }
 
     @Provides

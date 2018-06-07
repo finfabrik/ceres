@@ -14,7 +14,7 @@ import static com.blokaly.ceres.common.Configs.INTEGER_EXTRACTOR;
 
 @Singleton
 public class JedisProvider extends ServiceProvider<Jedis> {
-  private static Logger LOGGER = LoggerFactory.getLogger(JedisProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JedisProvider.class);
   private final Jedis jedis;
 
   @Inject

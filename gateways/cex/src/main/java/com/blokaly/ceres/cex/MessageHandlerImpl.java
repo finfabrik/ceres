@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class MessageHandlerImpl implements MessageHandler {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(MessageHandlerImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandlerImpl.class);
   private final Gson gson;
   private final Provider<CexClient> clientProvider;
   private final OrderBookKeeper bookKeeper;
