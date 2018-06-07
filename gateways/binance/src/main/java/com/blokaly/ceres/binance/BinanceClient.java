@@ -36,9 +36,9 @@ public class BinanceClient extends WebSocketClient {
   @Override
   public void onOpen(ServerHandshake handshake) {
     LOGGER.info("ws open, status - {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
+    handler.init();
     if (listener != null) {
       listener.onConnected(handler.getSymbol());
-      handler.start();
     }
   }
 
@@ -54,6 +54,7 @@ public class BinanceClient extends WebSocketClient {
   @Override
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
+    handler.reset();
     if (listener != null) {
       listener.onDisconnected(handler.getSymbol());
     }

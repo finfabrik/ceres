@@ -1,6 +1,6 @@
 package com.blokaly.ceres.simulation;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.kafka.GsonProducer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

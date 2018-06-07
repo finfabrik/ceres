@@ -2,9 +2,9 @@ package com.blokaly.ceres.gdax;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Source;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.gdax.callback.*;
 import com.blokaly.ceres.gdax.event.AbstractEvent;

@@ -2,8 +2,8 @@ package com.blokaly.ceres.coinmarketcap;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.Services;
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.system.Services;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.StringProducer;
 import com.google.gson.Gson;
@@ -13,8 +13,6 @@ import com.google.inject.Exposed;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.List;

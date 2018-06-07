@@ -1,4 +1,4 @@
-package com.blokaly.ceres.common;
+package com.blokaly.ceres.system;
 
 import com.google.inject.AbstractModule;
 import com.netflix.governator.ShutdownHookModule;

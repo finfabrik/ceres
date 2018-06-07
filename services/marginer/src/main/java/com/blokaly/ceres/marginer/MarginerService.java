@@ -2,9 +2,8 @@ package com.blokaly.ceres.marginer;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.CommonModule;
 import com.blokaly.ceres.common.Source;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

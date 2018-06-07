@@ -1,4 +1,4 @@
-package com.blokaly.ceres.common;
+package com.blokaly.ceres.system;
 
 public class CommonConfigs {
   public static final String APP_SOURCE = "app.source";

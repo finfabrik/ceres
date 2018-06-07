@@ -1,6 +1,6 @@
 package com.blokaly.ceres.coinmarketcap;
 
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.kafka.StringProducer;
 import com.google.inject.Inject;

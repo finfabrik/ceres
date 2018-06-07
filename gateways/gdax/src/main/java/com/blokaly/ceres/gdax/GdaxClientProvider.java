@@ -1,6 +1,6 @@
 package com.blokaly.ceres.gdax;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;

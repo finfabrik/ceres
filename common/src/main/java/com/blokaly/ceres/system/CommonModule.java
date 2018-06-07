@@ -1,5 +1,8 @@
-package com.blokaly.ceres.common;
+package com.blokaly.ceres.system;
 
+import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.common.Configs;
+import com.blokaly.ceres.common.ExceptionLoggingHandler;
 import com.blokaly.ceres.health.HealthLogger;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -11,7 +14,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.FileNotFoundException;

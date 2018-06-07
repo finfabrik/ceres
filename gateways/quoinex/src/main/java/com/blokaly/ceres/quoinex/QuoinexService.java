@@ -2,9 +2,8 @@ package com.blokaly.ceres.quoinex;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.CommonConfigs;
-import com.blokaly.ceres.common.Services;
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.system.CommonConfigs;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.kafka.HBProducer;
@@ -22,10 +21,8 @@ import com.pusher.client.PusherOptions;
 import com.typesafe.config.Config;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 public class QuoinexService extends BootstrapService {

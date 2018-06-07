@@ -2,7 +2,7 @@ package com.blokaly.ceres.simulation;
 
 import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.kafka.GsonProducer;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.google.gson.Gson;

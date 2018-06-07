@@ -1,6 +1,6 @@
 package com.blokaly.ceres.bitstamp;
 
-import com.blokaly.ceres.web.HttpReader;
+import com.blokaly.ceres.network.HttpReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -2,7 +2,7 @@ package com.blokaly.ceres.monitor;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.web.HandlerModule;
 import com.blokaly.ceres.web.UndertowModule;
 import com.google.inject.Inject;

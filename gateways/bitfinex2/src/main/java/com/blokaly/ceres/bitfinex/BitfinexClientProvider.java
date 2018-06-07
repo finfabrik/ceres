@@ -1,6 +1,6 @@
 package com.blokaly.ceres.bitfinex;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;

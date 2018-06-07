@@ -2,7 +2,7 @@ package com.blokaly.ceres.persist;
 
 import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.influxdb.InfluxdbModule;
 import com.google.inject.Inject;
 import org.influxdb.InfluxDB;

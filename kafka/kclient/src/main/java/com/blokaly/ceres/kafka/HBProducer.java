@@ -1,9 +1,9 @@
 package com.blokaly.ceres.kafka;
 
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Configs;
 import com.blokaly.ceres.common.Source;
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 import org.apache.kafka.clients.producer.Producer;

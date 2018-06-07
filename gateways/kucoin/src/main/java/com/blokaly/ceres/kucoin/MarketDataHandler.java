@@ -1,6 +1,6 @@
 package com.blokaly.ceres.kucoin;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.kafka.ToBProducer;
 import com.blokaly.ceres.orderbook.DepthBasedOrderBook;
 import com.typesafe.config.Config;
@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Time;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 

@@ -1,6 +1,6 @@
 package com.blokaly.ceres.kraken;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.kafka.ToBProducer;
 import com.blokaly.ceres.orderbook.DepthBasedOrderBook;
 import com.google.inject.Inject;

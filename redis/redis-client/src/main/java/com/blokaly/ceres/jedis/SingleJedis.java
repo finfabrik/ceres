@@ -1,6 +1,6 @@
 package com.blokaly.ceres.jedis;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.redis.RedisClient;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

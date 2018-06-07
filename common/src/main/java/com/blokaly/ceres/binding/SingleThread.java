@@ -1,4 +1,4 @@
-package com.blokaly.ceres.common;
+package com.blokaly.ceres.binding;
 
 import com.google.inject.BindingAnnotation;
 import java.lang.annotation.Target;

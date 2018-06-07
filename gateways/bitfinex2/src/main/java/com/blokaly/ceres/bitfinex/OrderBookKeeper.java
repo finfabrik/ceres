@@ -1,6 +1,6 @@
 package com.blokaly.ceres.bitfinex;
 
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.orderbook.OrderBasedOrderBook;

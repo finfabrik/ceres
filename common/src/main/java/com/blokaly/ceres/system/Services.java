@@ -1,4 +1,4 @@
-package com.blokaly.ceres.common;
+package com.blokaly.ceres.system;
 
 import com.blokaly.ceres.binding.Utils;
 import com.blokaly.ceres.health.HealthChecker;

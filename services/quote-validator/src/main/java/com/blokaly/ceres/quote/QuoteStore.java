@@ -1,6 +1,6 @@
 package com.blokaly.ceres.quote;
 
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.kafka.Channel;
 import com.blokaly.ceres.kafka.KafkaChannel;
 import com.blokaly.ceres.redis.RedisClient;

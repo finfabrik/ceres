@@ -1,4 +1,4 @@
-package com.blokaly.ceres.web;
+package com.blokaly.ceres.network;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package com.blokaly.ceres.kafka;
 
-import com.blokaly.ceres.common.CommonConfigs;
+import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.orderbook.TopOfBook;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;

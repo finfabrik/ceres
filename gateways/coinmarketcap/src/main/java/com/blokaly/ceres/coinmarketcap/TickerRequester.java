@@ -1,6 +1,6 @@
 package com.blokaly.ceres.coinmarketcap;
 
-import com.blokaly.ceres.web.HttpReader;
+import com.blokaly.ceres.network.HttpReader;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

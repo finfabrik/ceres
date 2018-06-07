@@ -1,6 +1,6 @@
 package com.blokaly.ceres.persist;
 
-import com.blokaly.ceres.common.SingleThread;
+import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.influxdb.InfluxdbWriter;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;

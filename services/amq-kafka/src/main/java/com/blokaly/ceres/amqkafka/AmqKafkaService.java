@@ -2,7 +2,7 @@ package com.blokaly.ceres.amqkafka;
 
 import com.blokaly.ceres.activemq.ActiveMQCommonModule;
 import com.blokaly.ceres.activemq.QueueConsumer;
-import com.blokaly.ceres.common.Services;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
