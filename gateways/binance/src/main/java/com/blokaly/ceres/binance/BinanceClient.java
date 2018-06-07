@@ -1,6 +1,7 @@
 package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.DiffBookEvent;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -16,14 +17,9 @@ public class BinanceClient extends WebSocketClient {
   private volatile boolean stop = false;
   private final OrderBookHandler handler;
   private final Gson gson;
-  private final ConnectionListener listener;
+  private final WSConnectionListener listener;
 
-  public interface ConnectionListener {
-    void onConnected(String symbol);
-    void onDisconnected(String symbol);
-  }
-
-  public BinanceClient(URI serverURI, OrderBookHandler handler, Gson gson, ConnectionListener listener) {
+  public BinanceClient(URI serverURI, OrderBookHandler handler, Gson gson, WSConnectionListener listener) {
     super(serverURI);
     this.handler = handler;
     this.gson = gson;

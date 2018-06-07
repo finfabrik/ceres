@@ -5,6 +5,7 @@ import com.blokaly.ceres.binding.CeresModule;
 import com.blokaly.ceres.cex.callback.*;
 import com.blokaly.ceres.cex.event.AbstractEvent;
 import com.blokaly.ceres.cex.event.EventType;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.system.Services;
@@ -31,11 +32,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CexService extends BootstrapService {
-  private final Provider<CexClient> provider;
+  private final CexClientProvider provider;
   private final KafkaStreams streams;
 
   @Inject
-  public CexService(Provider<CexClient> provider, @Named("Throttled") KafkaStreams streams) {
+  public CexService(CexClientProvider provider, @Named("Throttled") KafkaStreams streams) {
     this.provider = provider;
     this.streams = streams;
   }
@@ -43,7 +44,7 @@ public class CexService extends BootstrapService {
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting cex client...");
-    provider.get().connect();
+    provider.start();
 
     waitFor(3);
     LOGGER.info("starting kafka streams...");
@@ -53,7 +54,7 @@ public class CexService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping cex client...");
-    provider.get().stop();
+    provider.stop();
 
     LOGGER.info("stopping kafka streams...");
     streams.close();
@@ -72,7 +73,9 @@ public class CexService extends BootstrapService {
 
       bindAllCallbacks();
       bind(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
-      bindExpose(CexClient.class).toProvider(CexClientProvider.class).in(Singleton.class);
+      bindExpose(CexClientProvider.class).asEagerSingleton();
+      bind(WSConnectionListener.class).to(CexClientProvider.class);
+      bindExpose(CexClient.class).toProvider(CexClientProvider.class);
     }
 
     @Provides

@@ -13,10 +13,7 @@ import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.blokaly.ceres.kafka.ToBProducer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Exposed;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -30,19 +27,20 @@ import java.util.Map;
 import static com.blokaly.ceres.bitfinex.event.EventType.*;
 
 public class BitfinexService extends BootstrapService {
-  private final BitfinexClient client;
+  private final BitfinexClientProvider provider;
   private final KafkaStreams streams;
 
   @Inject
-  public BitfinexService(BitfinexClient client, @Named("Throttled") KafkaStreams streams) {
-    this.client = client;
+  public BitfinexService(BitfinexClientProvider provider, @Named("Throttled") KafkaStreams streams) {
+    this.provider = provider;
     this.streams = streams;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting websocket client...");
-    client.connect();
+    provider.start();
+
     waitFor(3);
     LOGGER.info("starting kafka streams...");
     streams.start();
@@ -51,7 +49,8 @@ public class BitfinexService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping websocket client...");
-    client.close();
+    provider.stop();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }

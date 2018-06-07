@@ -1,5 +1,6 @@
 package com.blokaly.ceres.bitfinex;
 
+import com.blokaly.ceres.network.WSConnectionListener;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -10,31 +11,23 @@ import java.net.URI;
 
 public class BitfinexClient extends WebSocketClient {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(BitfinexClient.class);
-    private volatile boolean stop = false;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BitfinexClient.class);
+    private static final String client = "bitfinex";
     private final JsonCracker cracker;
-    private final ConnectionListener listener;
+    private final WSConnectionListener listener;
+    private volatile boolean stop = false;
 
-    public interface ConnectionListener {
-        void onConnected();
-        void onDisconnected();
-        void reconnect();
-    }
-
-    public BitfinexClient(URI serverURI, JsonCracker cracker, ConnectionListener listener) {
+    public BitfinexClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
         super(serverURI);
         this.cracker = cracker;
         this.listener = listener;
-        LOGGER.info("client initiated");
     }
-
-
 
     @Override
     public void onOpen(ServerHandshake handshake) {
         LOGGER.info("ws open - status {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
         if (listener != null) {
-            listener.onConnected();
+            listener.onConnected(client);
         }
     }
 
@@ -50,14 +43,14 @@ public class BitfinexClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         LOGGER.info("ws close - reason: {}", reason);
         if (listener != null) {
-            listener.onDisconnected();
+            listener.onDisconnected(client);
         }
     }
 
     public void tryReconnect() {
         LOGGER.info("ws reconnecting...");
         if (listener != null) {
-            listener.reconnect();
+            listener.reconnect(client);
         }
     }
 

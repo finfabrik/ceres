@@ -2,6 +2,7 @@ package com.blokaly.ceres.gdax;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.system.Services;
@@ -32,11 +33,11 @@ import java.util.stream.Collectors;
 import static com.blokaly.ceres.gdax.event.EventType.*;
 
 public class GdaxService extends BootstrapService {
-  private final Provider<GdaxClient> provider;
+  private final GdaxClientProvider provider;
   private final KafkaStreams streams;
 
   @Inject
-  public GdaxService(Provider<GdaxClient> provider, @Named("Throttled") KafkaStreams streams) {
+  public GdaxService(GdaxClientProvider provider, @Named("Throttled") KafkaStreams streams) {
     this.provider = provider;
     this.streams = streams;
   }
@@ -44,7 +45,7 @@ public class GdaxService extends BootstrapService {
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting gdax client...");
-    provider.get().connect();
+    provider.start();
 
     waitFor(3);
     LOGGER.info("starting kafka streams...");
@@ -54,7 +55,8 @@ public class GdaxService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping gdax client...");
-    provider.get().stop();
+    provider.stop();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }
@@ -72,7 +74,9 @@ public class GdaxService extends BootstrapService {
 
       bindAllCallbacks();
       bind(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
-      bindExpose(GdaxClient.class).toProvider(GdaxClientProvider.class).in(Singleton.class);
+      bindExpose(GdaxClientProvider.class).asEagerSingleton();
+      bind(WSConnectionListener.class).to(GdaxClientProvider.class);
+      bindExpose(GdaxClient.class).toProvider(GdaxClientProvider.class);
     }
 
     @Provides

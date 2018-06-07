@@ -27,20 +27,24 @@ public class CexClientProvider extends WSConnectionAdapter implements Provider<C
     return client;
   }
 
-  @PreDestroy
-  private void stop() {
+  public void start() {
+    diabled = false;
+    client.connect();
+  }
+
+  public void stop() {
     diabled = true;
     client.stop();
   }
 
   @Override
-  protected void establishConnection() {
-    LOGGER.info("CEX client reconnecting...");
+  protected void establishConnection(String id) {
+    LOGGER.info("{} reconnecting...", id);
     client.reconnect();
   }
 
   @Override
-  public void reconnect() {
+  public void reconnect(String id) {
     if (!diabled) {
       client.stop();
     }

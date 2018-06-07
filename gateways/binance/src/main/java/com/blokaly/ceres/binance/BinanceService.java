@@ -23,19 +23,19 @@ import org.apache.kafka.streams.StreamsBuilder;
 import java.util.Collection;
 
 public class BinanceService extends BootstrapService {
-  private final Collection<BinanceClient> clients;
+  private final BinanceClientProvider provider;
   private final KafkaStreams streams;
 
   @Inject
   public BinanceService(BinanceClientProvider provider, @Named("Throttled") KafkaStreams streams) {
-    this.clients = provider.get();
+    this.provider = provider;
     this.streams = streams;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting websocket clients...");
-    clients.forEach(BinanceClient::connect);
+    provider.start();
 
     waitFor(3);
     LOGGER.info("starting kafka streams...");
@@ -45,7 +45,7 @@ public class BinanceService extends BootstrapService {
   @Override
   protected void shutDown() throws Exception {
     LOGGER.info("stopping websocket client...");
-    clients.forEach(BinanceClient::stop);
+    provider.stop();
 
     LOGGER.info("stopping kafka streams...");
     streams.close();

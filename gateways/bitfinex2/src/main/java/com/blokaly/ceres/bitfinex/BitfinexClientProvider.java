@@ -1,29 +1,25 @@
 package com.blokaly.ceres.bitfinex;
 
 import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
 import java.net.URI;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class BitfinexClientProvider implements Provider<BitfinexClient>, BitfinexClient.ConnectionListener {
+public class BitfinexClientProvider extends WSConnectionAdapter implements Provider<BitfinexClient> {
   private static Logger LOGGER = LoggerFactory.getLogger(BitfinexClientProvider.class);
   private final BitfinexClient client;
-  private final ScheduledExecutorService executorService;
-  private volatile boolean stopping;
 
   @Inject
   public BitfinexClientProvider(URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
-    this.executorService = executorService;
+    super(executorService);
     client = new BitfinexClient(serverURI, cracker, this);
-    stopping = false;
   }
 
   @Override
@@ -31,36 +27,26 @@ public class BitfinexClientProvider implements Provider<BitfinexClient>, Bitfine
     return client;
   }
 
-  @Override
-  public void onConnected() {
-    LOGGER.info("Bitfinex client connected");
+  public void start() {
+    diabled = false;
+    client.connect();
   }
 
-  @Override
-  public void onDisconnected() {
-    LOGGER.info("Bitfinex client disconnected");
-    if (!stopping) {
-      executorService.schedule(this::connectWorker, 5, TimeUnit.SECONDS);
-    }
-  }
-
-  @PreDestroy
-  private void stop() {
-    stopping = true;
+  public void stop() {
+    diabled = true;
     client.stop();
   }
 
   @Override
-  public void reconnect() {
-    if (!stopping) {
+  public void reconnect(String id) {
+    if (!diabled) {
       client.stop();
     }
   }
 
-  private void connectWorker() {
-    if (!stopping) {
-      LOGGER.info("Bitfinex client reconnecting...");
-      client.reconnect();
-    }
+  @Override
+  protected void establishConnection(String id) {
+    LOGGER.info("{} reconnecting...", id);
+    client.reconnect();
   }
 }

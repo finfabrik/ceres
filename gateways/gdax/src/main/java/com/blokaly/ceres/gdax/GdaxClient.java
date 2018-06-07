@@ -14,10 +14,11 @@ import java.net.URI;
 @Singleton
 public class GdaxClient extends WebSocketClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(GdaxClient.class);
-  private volatile boolean stop = false;
+  private static final Logger LOGGER = LoggerFactory.getLogger(GdaxClient.class);
+  private static final String client = "gdax";
   private final JsonCracker cracker;
   private final WSConnectionListener listener;
+  private volatile boolean stop = false;
 
   @Inject
   public GdaxClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
@@ -31,7 +32,7 @@ public class GdaxClient extends WebSocketClient {
   public void onOpen(ServerHandshake handshakedata) {
     LOGGER.info("ws open, status: {}:{}", handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
     if (listener != null) {
-      listener.onConnected();
+      listener.onConnected(client);
     }
     cracker.onOpen();
   }
@@ -48,7 +49,7 @@ public class GdaxClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
     if (listener != null) {
-      listener.onDisconnected();
+      listener.onDisconnected(client);
     }
     cracker.onClose();
   }

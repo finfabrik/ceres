@@ -11,25 +11,23 @@ import java.net.URI;
 
 public class BitfinexClient extends WebSocketClient {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(BitfinexClient.class);
-    private volatile boolean stop = false;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BitfinexClient.class);
+    private static final String client = "bitfinex";
     private final JsonCracker cracker;
     private final WSConnectionListener listener;
+    private volatile boolean stop = false;
 
     public BitfinexClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
         super(serverURI);
         this.cracker = cracker;
         this.listener = listener;
-        LOGGER.info("client initiated");
     }
-
-
 
     @Override
     public void onOpen(ServerHandshake handshake) {
         LOGGER.info("ws open - status {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
         if (listener != null) {
-            listener.onConnected();
+            listener.onConnected(client);
         }
     }
 
@@ -45,14 +43,14 @@ public class BitfinexClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         LOGGER.info("ws close - reason: {}", reason);
         if (listener != null) {
-            listener.onDisconnected();
+            listener.onDisconnected(client);
         }
     }
 
     public void tryReconnect() {
         LOGGER.info("ws reconnecting...");
         if (listener != null) {
-            listener.reconnect();
+            listener.reconnect(client);
         }
     }
 

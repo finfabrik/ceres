@@ -17,17 +17,17 @@ public abstract class WSConnectionAdapter implements WSConnectionListener {
   }
 
   @Override
-  public void onConnected() {
-    logger.info("WS client connected");
+  public void onConnected(String id) {
+    logger.info("WS client [{}] connected", id);
   }
 
   @Override
-  public void onDisconnected() {
-    logger.info("WS client disconnected");
+  public void onDisconnected(String id) {
+    logger.info("WS client [{}] disconnected", id);
     if (!diabled) {
-      executorService.schedule(this::establishConnection, 5, TimeUnit.SECONDS);
+      executorService.schedule(()->{establishConnection(id);}, 5, TimeUnit.SECONDS);
     }
   }
 
-  abstract protected void establishConnection();
+  abstract protected void establishConnection(String id);
 }

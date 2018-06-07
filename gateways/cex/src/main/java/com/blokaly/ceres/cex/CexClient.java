@@ -16,12 +16,13 @@ import java.net.URI;
 
 public class CexClient extends WebSocketClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(CexClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CexClient.class);
+  private static final String client = "cex";
   private final String key;
   private final String secret;
-  private volatile boolean stop = false;
   private final JsonCracker cracker;
   private final WSConnectionListener listener;
+  private volatile boolean stop = false;
 
   @Inject
   public CexClient(Config config, URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
@@ -41,7 +42,7 @@ public class CexClient extends WebSocketClient {
   public void onOpen(ServerHandshake handshakedata) {
     LOGGER.info("ws open, status: {}:{}", handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
     if (listener != null) {
-      listener.onConnected();
+      listener.onConnected(client);
     }
     cracker.onOpen();
   }
@@ -58,7 +59,7 @@ public class CexClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
     if (listener != null) {
-      listener.onDisconnected();
+      listener.onDisconnected(client);
     }
     cracker.onClose();
   }

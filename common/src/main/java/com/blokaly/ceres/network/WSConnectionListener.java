@@ -1,7 +1,7 @@
 package com.blokaly.ceres.network;
 
 public interface WSConnectionListener {
-  void onConnected();
-  void onDisconnected();
-  void reconnect();
+  void onConnected(String id);
+  void onDisconnected(String id);
+  void reconnect(String id);
 }
