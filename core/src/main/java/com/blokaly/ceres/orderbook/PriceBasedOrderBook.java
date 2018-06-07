@@ -71,7 +71,11 @@ public class PriceBasedOrderBook implements OrderBook<OrderInfo>, TopOfBook {
   private void processUpdate(OrderInfo order) {
     NavigableMap<DecimalNumber, PriceLevel> levels = sidedLevels(order.side());
     PriceLevel level = new PriceLevel(order.getPrice(), order.getQuantity());
-    levels.put(level.price, level);
+    if (level.getQuantity().compareTo(DecimalNumber.ZERO) <= 0) {
+      levels.remove(level.price);
+    } else {
+      levels.put(level.price, level);
+    }
   }
 
   private NavigableMap<DecimalNumber, PriceLevel> sidedLevels(OrderInfo.Side side) {
