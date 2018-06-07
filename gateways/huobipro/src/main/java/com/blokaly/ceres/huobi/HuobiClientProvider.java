@@ -1,5 +1,7 @@
 package com.blokaly.ceres.huobi;
 
+import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -7,14 +9,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Singleton
-public class HuobiClientProvider implements Provider<HuobiClient>, HuobiClient.ConnectionListener {
+public class HuobiClientProvider extends WSConnectionAdapter implements Provider<HuobiClient> {
   private static Logger LOGGER = LoggerFactory.getLogger(HuobiClientProvider.class);
   private final HuobiClient client;
 
   @Inject
-  public HuobiClientProvider(URI serverURI, JsonCracker cracker) {
+  public HuobiClientProvider(URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
+    super(executorService);
     client = new HuobiClient(serverURI, cracker, this);
   }
 
@@ -23,14 +27,26 @@ public class HuobiClientProvider implements Provider<HuobiClient>, HuobiClient.C
     return client;
   }
 
-  @Override
-  public void onConnected() {
-    LOGGER.info("Huobi client connected");
+  public void start() {
+    diabled = false;
+    client.connect();
+  }
+
+  public void stop() {
+    diabled = true;
+    client.stop();
   }
 
   @Override
-  public void onDisconnected() {
-    LOGGER.info("Huobi client disconnected, reconnecting...");
+  protected void establishConnection(String id) {
+    LOGGER.info("{} reconnecting...", id);
     client.reconnect();
+  }
+
+  @Override
+  public void reconnect(String id) {
+    if (!diabled) {
+      client.stop();
+    }
   }
 }

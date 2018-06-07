@@ -1,6 +1,7 @@
 package com.blokaly.ceres.huobi;
 
 import com.blokaly.ceres.common.GzipUtils;
+import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.inject.Inject;
 import org.apache.kafka.common.utils.ByteBufferInputStream;
 import org.java_websocket.client.WebSocketClient;
@@ -15,29 +16,24 @@ import java.nio.ByteBuffer;
 
 public class HuobiClient extends WebSocketClient {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(HuobiClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(HuobiClient.class);
+  private static final String client = "huobi";
   private volatile boolean stop = false;
   private final JsonCracker cracker;
-  private final ConnectionListener listener;
-
-  public interface ConnectionListener {
-    void onConnected();
-    void onDisconnected();
-  }
+  private final WSConnectionListener listener;
 
   @Inject
-  public HuobiClient(URI serverURI, JsonCracker cracker, ConnectionListener listener) {
+  public HuobiClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
     super(serverURI);
     this.cracker = cracker;
     this.listener = listener;
-    LOGGER.info("client initiated");
   }
 
   @Override
   public void onOpen(ServerHandshake handshakedata) {
     LOGGER.info("ws open, status: {}:{}", handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
     if (listener != null) {
-      listener.onConnected();
+      listener.onConnected(client);
     }
     cracker.onOpen();
   }
@@ -65,7 +61,7 @@ public class HuobiClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
     if (listener != null) {
-      listener.onDisconnected();
+      listener.onDisconnected(client);
     }
     cracker.onClose();
   }
