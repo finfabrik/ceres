@@ -15,6 +15,9 @@ import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.blokaly.ceres.kafka.ToBProducer;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
+import com.blokaly.ceres.web.HandlerModule;
+import com.blokaly.ceres.web.UndertowModule;
+import com.blokaly.ceres.web.handlers.HealthCheckHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Exposed;
@@ -27,6 +30,7 @@ import com.google.inject.name.Names;
 import com.typesafe.config.Config;
 import io.socket.client.IO;
 import io.socket.client.Socket;
+import io.undertow.Undertow;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 
@@ -39,26 +43,38 @@ import static com.blokaly.ceres.anx.event.EventType.SNAPSHOT;
 public class AnxService extends BootstrapService {
   private final AnxSocketIOClient client;
   private final KafkaStreams streams;
+  private final Undertow undertow;
 
   @Inject
-  public AnxService(AnxSocketIOClient client, @Named("Throttled") KafkaStreams streams) {
+  public AnxService(AnxSocketIOClient client,
+                    @Named("Throttled") KafkaStreams streams,
+                    Undertow server) {
     this.client = client;
     this.streams = streams;
+    undertow = server;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOGGER.info("starting ANX socketio client...");
     client.connect();
+
     waitFor(3);
     LOGGER.info("starting kafka streams...");
     streams.start();
+
+    this.LOGGER.info("Web server starting...");
+    this.undertow.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOGGER.info("Web server stopping...");
+    undertow.stop();
+
     LOGGER.info("stopping ANX socketio client...");
     client.close();
+
     LOGGER.info("stopping kafka streams...");
     streams.close();
   }
@@ -67,6 +83,15 @@ public class AnxService extends BootstrapService {
 
     @Override
     protected void configure() {
+      this.install(new UndertowModule(new HandlerModule() {
+
+        @Override
+        protected void configureHandlers() {
+          this.bindHandler().to(HealthCheckHandler.class);
+        }
+      }));
+      expose(Undertow.class);
+
       install(new KafkaCommonModule());
       install(new KafkaStreamModule());
       bindExpose(ToBProducer.class);

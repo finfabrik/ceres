@@ -13,12 +13,16 @@ import com.blokaly.ceres.kafka.ToBProducer;
 import com.blokaly.ceres.okcoin.event.ChannelEvent;
 import com.blokaly.ceres.okcoin.event.EventAdapter;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
+import com.blokaly.ceres.web.HandlerModule;
+import com.blokaly.ceres.web.UndertowModule;
+import com.blokaly.ceres.web.handlers.HealthCheckHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
+import io.undertow.Undertow;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 
@@ -32,11 +36,15 @@ import java.util.stream.Collectors;
 public class OKCoinService extends BootstrapService {
   private final OKCoinClientProvider provider;
   private final KafkaStreams streams;
+  private final Undertow undertow;
 
   @Inject
-  public OKCoinService(OKCoinClientProvider provider, @Named("Throttled") KafkaStreams streams) {
+  public OKCoinService(OKCoinClientProvider provider,
+                       @Named("Throttled") KafkaStreams streams,
+                       Undertow undertow) {
     this.provider = provider;
     this.streams = streams;
+    this.undertow = undertow;
   }
 
   @Override
@@ -47,10 +55,16 @@ public class OKCoinService extends BootstrapService {
     waitFor(3);
     LOGGER.info("starting kafka streams...");
     streams.start();
+
+    LOGGER.info("Web server starting...");
+    undertow.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOGGER.info("Web server stopping...");
+    undertow.stop();
+
     LOGGER.info("stopping OKCoin client...");
     provider.stop();
 
@@ -62,6 +76,15 @@ public class OKCoinService extends BootstrapService {
 
     @Override
     protected void configure() {
+      this.install(new UndertowModule(new HandlerModule() {
+
+        @Override
+        protected void configureHandlers() {
+          this.bindHandler().to(HealthCheckHandler.class);
+        }
+      }));
+      expose(Undertow.class);
+
       install(new KafkaCommonModule());
       install(new KafkaStreamModule());
       bindExpose(ToBProducer.class);

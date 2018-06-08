@@ -2,6 +2,7 @@ dependencies {
     compile project(':gateways')
     compile project(':kafka:kclient')
     compile project(':kafka:kstream')
+    compile project(':webserver:server')
     compile "microsoft.aspnet:signalr-client-sdk:1.0.4"
 }
 

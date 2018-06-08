@@ -11,6 +11,9 @@ import com.blokaly.ceres.kafka.HBProducer;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.blokaly.ceres.kafka.ToBProducer;
+import com.blokaly.ceres.web.HandlerModule;
+import com.blokaly.ceres.web.UndertowModule;
+import com.blokaly.ceres.web.handlers.HealthCheckHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.*;
@@ -18,6 +21,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.typesafe.config.Config;
+import io.undertow.Undertow;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 
@@ -29,11 +33,15 @@ import static com.blokaly.ceres.bitfinex.event.EventType.*;
 public class BitfinexService extends BootstrapService {
   private final BitfinexClientProvider provider;
   private final KafkaStreams streams;
+  private final Undertow undertow;
 
   @Inject
-  public BitfinexService(BitfinexClientProvider provider, @Named("Throttled") KafkaStreams streams) {
+  public BitfinexService(BitfinexClientProvider provider,
+                         @Named("Throttled") KafkaStreams streams,
+                         Undertow undertow) {
     this.provider = provider;
     this.streams = streams;
+    this.undertow = undertow;
   }
 
   @Override
@@ -44,10 +52,16 @@ public class BitfinexService extends BootstrapService {
     waitFor(3);
     LOGGER.info("starting kafka streams...");
     streams.start();
+
+    LOGGER.info("Web server starting...");
+    undertow.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOGGER.info("Web server stopping...");
+    undertow.stop();
+
     LOGGER.info("stopping websocket client...");
     provider.stop();
 
@@ -59,6 +73,15 @@ public class BitfinexService extends BootstrapService {
 
     @Override
     protected void configure() {
+      this.install(new UndertowModule(new HandlerModule() {
+
+        @Override
+        protected void configureHandlers() {
+          this.bindHandler().to(HealthCheckHandler.class);
+        }
+      }));
+      expose(Undertow.class);
+
       install(new KafkaCommonModule());
       install(new KafkaStreamModule());
       bindExpose(ToBProducer.class);
