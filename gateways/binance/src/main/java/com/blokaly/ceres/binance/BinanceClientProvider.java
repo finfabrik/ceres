@@ -55,9 +55,8 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     symbols.forEach(sym -> {
       try {
         String symbol = SymbolFormatter.normalise(sym);
-        String pair = symbol.endsWith("usdt") ? symbol.replace("usdt", "usd") : symbol;
         URI uri = new URI(String.format(wsUrl, sym));
-        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, pair + "." + source), producer, gson, esProvider.get());
+        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), producer, gson, esProvider.get());
         BinanceClient client = new BinanceClient(uri, handler, gson, this);
         clients.put(symbol, client);
       } catch (Exception ex) {
