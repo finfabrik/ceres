@@ -28,15 +28,23 @@ public class InfluxdbProvider implements Provider<InfluxDB> {
         this.threadFactory = threadFactory;
         Config influxdbConf = config.getConfig("influxdb");
         url = influxdbConf.getString("url");
-        username = influxdbConf.getString("username");
-        password = influxdbConf.getString("password");
+        if (influxdbConf.hasPath("username")) {
+            username = influxdbConf.getString("username");
+            password = influxdbConf.hasPath("password") ? influxdbConf.getString("password") : null;
+        } else {
+            username = null;
+            password = null;
+        }
     }
 
     @Override
     public synchronized InfluxDB get() {
         if (influxDB == null) {
-            influxDB = InfluxDBFactory.connect(url, username, password);
-            BatchOptions batchOptions = BatchOptions.DEFAULTS.threadFactory(threadFactory).exceptionHandler((points, throwable) -> LOGGER.error("Failed to write influxdb points", throwable));
+            influxDB = username!=null ? InfluxDBFactory.connect(url, username, password) : InfluxDBFactory.connect(url);
+            BatchOptions batchOptions = BatchOptions.DEFAULTS
+                .threadFactory(threadFactory)
+                .jitterDuration(500)
+                .exceptionHandler((points, throwable) -> LOGGER.error("Failed to write influxdb points", throwable));
             influxDB.enableBatch(batchOptions);
             influxDB.enableGzip();
         }
