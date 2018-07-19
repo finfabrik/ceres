@@ -44,15 +44,21 @@ subprojects {
         doLast {
 
             def memUsage = getMemoryUsage()
-            def func = """
+            def unixSetMem = """
                     |[ -z "\$APP_MEM" ] && APP_MEM=$memUsage
                     |""".stripMargin()
             def EVAL_SET = "eval set"
-            unixScript.text = unixScript.text.replace(EVAL_SET, func + EVAL_SET)
+            unixScript.text = unixScript.text.replace(EVAL_SET, unixSetMem + EVAL_SET)
             unixScript.text = unixScript.text.replace('MY_APP_NAME', '\$APP_NAME')
             unixScript.text = unixScript.text.replace('MY_APP_HOME', '\$APP_HOME')
             unixScript.text = unixScript.text.replace('MY_APP_MEM', '\$APP_MEM')
             unixScript.text = unixScript.text.replace('CLASSPATH=$APP_HOME/lib', 'CLASSPATH=$APP_HOME/conf/:$APP_HOME/lib')
+
+            def windowsSetMem = """
+                    |if "%APP_MEM%" == "" set APP_MEM=$memUsage
+                    |""".stripMargin()
+            def SET_JAVA_DEFAULT = "set DEFAULT_JVM_OPTS"
+            windowsScript.text = windowsScript.text.replace(SET_JAVA_DEFAULT, windowsSetMem + SET_JAVA_DEFAULT)
             windowsScript.text = windowsScript.text.replace('MY_APP_NAME', applicationName)
             windowsScript.text = windowsScript.text.replace('MY_APP_HOME', '%~dp0..')
             windowsScript.text = windowsScript.text.replace('MY_APP_MEM', '%APP_MEM%')
