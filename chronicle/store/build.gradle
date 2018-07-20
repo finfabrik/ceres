@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':chronicle')
+    compile 'org.xerial.snappy:snappy-java:1.1.7.2'
+    compile 'net.openhft:chronicle-queue:5.16.8'
+}

@@ -1,6 +1,7 @@
 package com.blokaly.ceres.system;
 
 public class CommonConfigs {
+  public static final String APP_NAME = "app.name";
   public static final String APP_SOURCE = "app.source";
   public static final String WS_URL = "app.ws.url";
   public static final String KAFKA_HB_KEY = "kafka.hb.key";
