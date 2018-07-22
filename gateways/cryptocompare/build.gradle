@@ -1,0 +1,14 @@
+dependencies {
+    compile project(':gateways')
+    compile project(':influxdb:influxdb-client')
+}
+
+mainClassName = 'com.blokaly.ceres.cryptocompare.CryptoCompareService'
+applicationName = "ccagfh"
+
+docker {
+    javaApplication {
+        baseImage = 'openjdk:10-slim'
+        tag = "${dockerRepo}/ceres-${applicationName}:${version}"
+    }
+}
