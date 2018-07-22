@@ -2,20 +2,20 @@ package com.blokaly.ceres.coinmarketcap;
 
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.StringProducer;
+import com.blokaly.ceres.system.Services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonDeserializer;
 import com.google.inject.Exposed;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.MapBinder;
 
-import java.lang.reflect.Type;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +24,6 @@ public class CoinMarketCapService extends BootstrapService {
   private final RefRateProducer producer;
   private final Gson gson;
   private final ScheduledExecutorService ses;
-  private final Type tickersType;
 
   @Inject
   public CoinMarketCapService(TickerRequester requester, RefRateProducer producer, Gson gson, @SingleThread ScheduledExecutorService ses) {
@@ -32,13 +31,12 @@ public class CoinMarketCapService extends BootstrapService {
     this.producer = producer;
     this.gson = gson;
     this.ses = ses;
-    tickersType = new TypeToken<List<TickerEvent>>() {}.getType();
   }
 
   @Override
   protected void startUp() throws Exception {
     ses.scheduleAtFixedRate(()->{
-      List<TickerEvent> tickers = gson.fromJson(requester.request(), tickersType);
+      TickerEvent[] tickers = requester.request(gson);
       producer.update(tickers);
     }, 0L, 5L, TimeUnit.MINUTES);
     ses.scheduleAtFixedRate(producer::publishRate, 5L, 5L, TimeUnit.SECONDS);
@@ -54,14 +52,17 @@ public class CoinMarketCapService extends BootstrapService {
 
       bindExpose(TickerRequester.class);
       bindExpose(RefRateProducer.class);
+
+      MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
+      binder.addBinding(TickerEvent.class).to(TickerEvent.EventAdapter.class);
     }
 
     @Exposed
     @Provides
     @Singleton
-    public Gson provideGson() {
+    public Gson provideGson(Map<Class, JsonDeserializer> deserializers) {
       GsonBuilder builder = new GsonBuilder();
-      builder.registerTypeAdapter(TickerEvent.class, new TickerEventAdapter());
+      deserializers.forEach(builder::registerTypeAdapter);
       return builder.create();
     }
   }

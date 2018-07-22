@@ -9,6 +9,7 @@ import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,17 +19,17 @@ public class RefRateProducer {
   private static final String USD = "USD";
   private final StringProducer producer;
   private final String source;
-  private List<TickerEvent> tickers;
+  private TickerEvent[] tickers;
 
   @Inject
   public RefRateProducer(Config config, StringProducer producer) {
     this.producer = producer;
     source = Source.getCode(config, CommonConfigs.APP_SOURCE);
-    tickers = Collections.emptyList();
+    tickers = new TickerEvent[0];
   }
 
   public void publishRate() {
-    tickers.parallelStream().filter(TickerEvent::isValid).forEach(evt -> {
+    Arrays.stream(tickers).filter(TickerEvent::isValid).forEach(evt -> {
       String key = getKey(evt);
       String price = evt.getUsdPrice().toString();
       LOGGER.debug("refrate: {}:{}", key, price);
@@ -45,7 +46,7 @@ public class RefRateProducer {
     }
   }
 
-  public void update(List<TickerEvent> tickers) {
+  public void update(TickerEvent... tickers) {
     this.tickers = tickers;
   }
 }

@@ -9,7 +9,7 @@ memoryUsage = "512m"
 
 docker {
     javaApplication {
-        baseImage = 'blokaly/java8:latest'
+        baseImage = 'openjdk:10-slim'
         tag = "${dockerRepo}/ceres-${applicationName}:${version}"
     }
 }
