@@ -14,6 +14,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
@@ -29,8 +30,11 @@ public class CryptoCompareService extends BootstrapService {
 
   @Override
   protected void startUp() throws Exception {
-    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-    MinuteBars bars = historicalData.getHistoMinute("BTC", "USD", now, 10);
+//    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+//    MinuteBars bars = historicalData.getHistoMinute("BTC", "USD", now, 10);
+//    LocalDate date = LocalDate.parse("2018-07-14");
+//    MinuteBars bars = historicalData.getHistoMinuteOfDay("BTC", "USD", date);
+//    System.out.println();
   }
 
 
