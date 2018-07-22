@@ -44,7 +44,7 @@ public class CryptoCompareService extends BootstrapService {
     @Override
     protected void configure() {
       MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
-      binder.addBinding(MinuteBars.class).to(HistoricalData.MinuteBarsAdapter.class);
+      binder.addBinding(MinuteBars.class).to(MinuteBars.EventAdapter.class);
     }
 
     @Exposed

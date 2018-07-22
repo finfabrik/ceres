@@ -1,14 +1,13 @@
 package com.blokaly.ceres.cryptocompare.api;
 
 import com.blokaly.ceres.network.RestGetJson;
-import com.google.gson.*;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -51,23 +50,6 @@ public class HistoricalData {
       return MinuteBars.fail("null response");
     } else {
       return gson.fromJson(res, MinuteBars.class);
-    }
-  }
-
-  public static class MinuteBarsAdapter implements JsonDeserializer<MinuteBars> {
-    @Override
-    public MinuteBars deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-      JsonObject res = json.getAsJsonObject();
-      if (res.has("Response") && "Success".equalsIgnoreCase(res.get("Response").getAsString())) {
-        JsonArray data = res.get("Data").getAsJsonArray();
-        MinuteBars.Bar[] bars = context.deserialize(data, MinuteBars.Bar[].class);
-        long fromEpochSec = res.get("TimeFrom").getAsLong();
-        long toEpochSec = res.get("TimeTo").getAsLong();
-        return MinuteBars.success(fromEpochSec, toEpochSec, bars);
-      } else {
-        String msg = res.has("Message") ? res.get("Message").getAsString() : res.toString();
-        return MinuteBars.fail(msg);
-      }
     }
   }
 }

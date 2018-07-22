@@ -1,5 +1,9 @@
 package com.blokaly.ceres.cryptocompare.api;
 
+import com.google.gson.*;
+
+import java.lang.reflect.Type;
+
 public class MinuteBars {
   private final boolean success;
   private final String message;
@@ -31,5 +35,22 @@ public class MinuteBars {
     private double close;
     private double volumefrom;
     private double volumeto;
+  }
+
+  public static class EventAdapter implements JsonDeserializer<MinuteBars> {
+    @Override
+    public MinuteBars deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      JsonObject res = json.getAsJsonObject();
+      if (res.has("Response") && "Success".equalsIgnoreCase(res.get("Response").getAsString())) {
+        JsonArray data = res.get("Data").getAsJsonArray();
+        MinuteBars.Bar[] bars = context.deserialize(data, MinuteBars.Bar[].class);
+        long fromEpochSec = res.get("TimeFrom").getAsLong();
+        long toEpochSec = res.get("TimeTo").getAsLong();
+        return MinuteBars.success(fromEpochSec, toEpochSec, bars);
+      } else {
+        String msg = res.has("Message") ? res.get("Message").getAsString() : res.toString();
+        return MinuteBars.fail(msg);
+      }
+    }
   }
 }
