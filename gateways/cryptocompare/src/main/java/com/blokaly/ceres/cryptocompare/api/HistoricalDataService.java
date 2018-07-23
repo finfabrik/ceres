@@ -14,16 +14,17 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class HistoricalData {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HistoricalData.class);
+public class HistoricalDataService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HistoricalDataService.class);
   private static final String HISTO_MINUTE = "/histominute";
   private static final ZoneId UTC = ZoneId.of("UTC");
+  private static final long MINUTES_OF_DAY =TimeUnit.DAYS.toMinutes(1);
   private final String apiPrefix;
   private final String apiAppName;
   private final Gson gson;
 
   @Inject
-  public HistoricalData(Config config, Gson gson) {
+  public HistoricalDataService(Config config, Gson gson) {
     apiPrefix = config.getString("api.url");
     apiAppName = config.hasPath("api.app") ? config.getString("api.app") : null;
     this.gson = gson;
@@ -36,8 +37,7 @@ public class HistoricalData {
     }
 
     ZonedDateTime endTime = date.atStartOfDay(UTC).plusDays(1);
-    long limit = TimeUnit.DAYS.toMinutes(1);
-    return getHistoMinute(base, terms, endTime.toLocalDateTime(), limit);
+    return getHistoMinute(base, terms, endTime.toLocalDateTime(), MINUTES_OF_DAY);
   }
 
   public MinuteBars getHistoMinute(String base, String terms, LocalDateTime toUtc, long limit) {
@@ -47,8 +47,8 @@ public class HistoricalData {
       end = now - 60;
     }
     LinkedHashMap<String, String> params = new LinkedHashMap<>();
-    params.put("fsym", base);
-    params.put("tsym", terms);
+    params.put("fsym", base.toUpperCase());
+    params.put("tsym", terms.toUpperCase());
     params.put("toTs", String.valueOf(end));
     params.put("limit", String.valueOf(limit));
     if (apiAppName != null) {

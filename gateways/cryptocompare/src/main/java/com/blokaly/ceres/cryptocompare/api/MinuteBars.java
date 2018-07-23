@@ -27,6 +27,26 @@ public class MinuteBars {
     return new MinuteBars(false, message, 0, 0);
   }
 
+  public boolean isSuccess() {
+    return success;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public long getTimeFrom() {
+    return timeFrom;
+  }
+
+  public long getTimeTo() {
+    return timeTo;
+  }
+
+  public Bar[] getBars() {
+    return bars;
+  }
+
   public static class Bar {
     private long time;
     private double open;
@@ -35,6 +55,34 @@ public class MinuteBars {
     private double close;
     private double volumefrom;
     private double volumeto;
+
+    public long getTime() {
+      return time;
+    }
+
+    public double getOpen() {
+      return open;
+    }
+
+    public double getHigh() {
+      return high;
+    }
+
+    public double getLow() {
+      return low;
+    }
+
+    public double getClose() {
+      return close;
+    }
+
+    public double getVolumeFrom() {
+      return volumefrom;
+    }
+
+    public double getVolumeTo() {
+      return volumeto;
+    }
   }
 
   public static class EventAdapter implements JsonDeserializer<MinuteBars> {

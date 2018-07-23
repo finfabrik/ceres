@@ -41,7 +41,7 @@ public class InfluxdbReader {
           throw new InfluxdbQueryException(series.getError());
         } else {
           List<QueryResult.Series> rows = series.getSeries();
-          if (rows.isEmpty()) {
+          if (rows==null || rows.isEmpty()) {
             return  table;
           } else {
             rows.forEach(row -> {
