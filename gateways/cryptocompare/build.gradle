@@ -6,9 +6,11 @@ dependencies {
 mainClassName = 'com.blokaly.ceres.cryptocompare.CryptoCompareService'
 applicationName = "ccagfh"
 
+memoryUsage = "512m"
+
 docker {
     javaApplication {
-        baseImage = 'openjdk:10-slim'
+        baseImage = 'openjdk:8-slim'
         tag = "${dockerRepo}/ceres-${applicationName}:${version}"
     }
 }
