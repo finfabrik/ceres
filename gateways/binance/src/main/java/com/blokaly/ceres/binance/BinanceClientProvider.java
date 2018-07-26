@@ -3,9 +3,9 @@ package com.blokaly.ceres.binance;
 import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
-import com.blokaly.ceres.kafka.ToBProducer;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
+import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -27,7 +27,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private static final Logger LOGGER = LoggerFactory.getLogger(BinanceClientProvider.class);
   private final String wsUrl;
   private final Gson gson;
-  private final ToBProducer producer;
+  private final TopOfBookProcessor processor;
   private final Provider<ExecutorService> esProvider;
   private final Map<String, BinanceClient> clients;
   private final List<String> symbols;
@@ -36,7 +36,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   @Inject
   public BinanceClientProvider(Config config,
                                Gson gson,
-                               ToBProducer producer,
+                               TopOfBookProcessor processor,
                                @SingleThread Provider<ExecutorService> esProvider,
                                @SingleThread ScheduledExecutorService executorService
                                ) {
@@ -45,7 +45,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     source = Source.valueOf(config.getString(CommonConfigs.APP_SOURCE).toUpperCase()).getCode();
     symbols = config.getStringList("symbols");
     this.gson = gson;
-    this.producer = producer;
+    this.processor = processor;
     this.esProvider = esProvider;
     clients = Maps.newHashMap();
   }
@@ -56,7 +56,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
       try {
         String symbol = SymbolFormatter.normalise(sym);
         URI uri = new URI(String.format(wsUrl, sym));
-        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), producer, gson, esProvider.get());
+        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), processor, gson, esProvider.get());
         BinanceClient client = new BinanceClient(uri, handler, gson, this);
         clients.put(symbol, client);
       } catch (Exception ex) {

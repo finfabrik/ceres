@@ -1,5 +1,6 @@
 package com.blokaly.ceres.kafka;
 
+import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.common.Configs;
 import com.google.inject.AbstractModule;
@@ -19,7 +20,9 @@ import java.util.Properties;
 
 public class KafkaCommonModule extends AbstractModule {
   @Override
-  protected void configure() {}
+  protected void configure() {
+    bind(TopOfBookProcessor.class).to(ToBProducer.class).in(Singleton.class);
+  }
 
   @Provides
   @Singleton

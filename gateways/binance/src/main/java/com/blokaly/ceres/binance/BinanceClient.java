@@ -24,7 +24,7 @@ public class BinanceClient extends WebSocketClient {
     this.handler = handler;
     this.gson = gson;
     this.listener = listener;
-    LOGGER.info("client initiated");
+    LOGGER.info("client initiated for {}", handler.getSymbol());
   }
 
 

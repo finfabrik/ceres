@@ -1,5 +1,6 @@
 package com.blokaly.ceres.kafka;
 
+import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.orderbook.TopOfBook;
 import com.google.common.collect.Maps;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
-public class ToBProducer {
+public class ToBProducer implements TopOfBookProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ToBProducer.class);
   private static final int BOOK_DEPTH = 5;
   private final Producer<String, String> producer;
@@ -39,6 +40,11 @@ public class ToBProducer {
     closing = true;
     producer.flush();
     producer.close();
+  }
+
+  @Override
+  public void process(TopOfBook topOfBook) {
+    publish(topOfBook);
   }
 
   public void publish(TopOfBook topOfBook) {
