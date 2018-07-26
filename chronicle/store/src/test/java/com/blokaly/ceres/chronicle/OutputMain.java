@@ -12,17 +12,21 @@ public class OutputMain {
   private static final BytesPool BP = new BytesPool();
 
   public static void main(String[] args) {
-    String path = "/opt/projects/github.com/finfabrik/ceres/test_queue";
+    String path = "/opt/projects/github.com/finfabrik/ceres/binance_marketdata";
     SingleChronicleQueue queue = SingleChronicleQueueBuilder.binary(path).build();
     ExcerptTailer tailer = queue.createTailer();
+    long counter = 0;
 
     while (true) {
       Bytes bytes = BP.acquireBytes();
       boolean read = tailer.readBytes(bytes);
-      if (read)
-        System.out.println("decoded: " + decompress(bytes));
-      else
+      if (read) {
+        counter++;
+        System.out.println("decoded[" + counter + "]: " + decompress(bytes));
+      }
+      else {
         Jvm.pause(10);
+      }
     }
   }
 
