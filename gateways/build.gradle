@@ -68,6 +68,7 @@ subprojects {
 
     dockerDistTar {
         instruction {"RUN mkdir -p /${applicationName}/logs"}
+        instruction {"RUN mkdir -p /${applicationName}/chronicles"}
     }
 }
 

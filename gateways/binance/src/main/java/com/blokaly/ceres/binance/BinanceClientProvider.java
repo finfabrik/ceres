@@ -1,6 +1,7 @@
 package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.network.WSConnectionAdapter;
@@ -28,6 +29,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private final String wsUrl;
   private final Gson gson;
   private final TopOfBookProcessor processor;
+  private final WriteStore store;
   private final Provider<ExecutorService> esProvider;
   private final Map<String, BinanceClient> clients;
   private final List<String> symbols;
@@ -37,6 +39,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   public BinanceClientProvider(Config config,
                                Gson gson,
                                TopOfBookProcessor processor,
+                               WriteStore store,
                                @SingleThread Provider<ExecutorService> esProvider,
                                @SingleThread ScheduledExecutorService executorService
                                ) {
@@ -46,6 +49,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     symbols = config.getStringList("symbols");
     this.gson = gson;
     this.processor = processor;
+    this.store = store;
     this.esProvider = esProvider;
     clients = Maps.newHashMap();
   }
@@ -56,8 +60,8 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
       try {
         String symbol = SymbolFormatter.normalise(sym);
         URI uri = new URI(String.format(wsUrl, sym));
-        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), processor, gson, esProvider.get());
-        BinanceClient client = new BinanceClient(uri, handler, gson, this);
+        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), processor, gson, store, esProvider.get());
+        BinanceClient client = new BinanceClient(uri, handler, store, gson, this);
         clients.put(symbol, client);
       } catch (Exception ex) {
         LOGGER.error("Error creating websocket for symbol: " + sym, ex);

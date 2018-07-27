@@ -2,8 +2,9 @@ package com.blokaly.ceres.binance.event;
 
 import com.blokaly.ceres.data.MarketDataSnapshot;
 import com.blokaly.ceres.data.OrderInfo;
-import com.google.gson.JsonArray;
+import com.google.gson.*;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,5 +50,18 @@ public class OrderBookEvent implements MarketDataSnapshot<OrderInfo> {
                 ", bids=" + bids +
                 ", asks=" + asks +
                 '}';
+    }
+
+    public static class Adapter implements JsonDeserializer<OrderBookEvent> {
+
+        @Override
+        public OrderBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            JsonObject jsonObject = json.getAsJsonObject();
+            long sequence = jsonObject.get("lastUpdateId").getAsLong();
+            JsonArray bids = jsonObject.get("bids").getAsJsonArray();
+            JsonArray asks = jsonObject.get("asks").getAsJsonArray();
+            return OrderBookEvent.parse(sequence, bids, asks);
+        }
     }
 }

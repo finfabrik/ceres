@@ -4,13 +4,16 @@ import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.OrderBookEvent;
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
+import com.blokaly.ceres.chronicle.ChronicleStoreModule;
+import com.blokaly.ceres.chronicle.WriteStore;
+import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Configs;
-import com.blokaly.ceres.orderbook.TopOfBookProcessor;
-import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.kafka.HBProducer;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.blokaly.ceres.kafka.ToBProducer;
+import com.blokaly.ceres.orderbook.TopOfBookProcessor;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.web.HandlerModule;
 import com.blokaly.ceres.web.UndertowModule;
 import com.blokaly.ceres.web.handlers.HealthCheckHandler;
@@ -21,8 +24,10 @@ import com.google.inject.*;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.lmax.disruptor.dsl.Disruptor;
 import com.typesafe.config.Config;
 import io.undertow.Undertow;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 
@@ -118,17 +123,35 @@ public class BinanceService {
     @Override
     protected void configure() {
 
-      if (undertowEnabled) {
-        this.install(new UndertowModule(new HandlerModule() {
+      configUndertow();
+      configKafka();
+      configChronicle();
 
-          @Override
-          protected void configureHandlers() {
-            this.bindHandler().to(HealthCheckHandler.class);
-          }
-        }));
-        expose(Undertow.class);
-      }
+      MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
+      binder.addBinding(OrderBookEvent.class).to(OrderBookEvent.Adapter.class);
+      binder.addBinding(DiffBookEvent.class).to(DiffBookEvent.Adapter.class);
+      bindExpose(BinanceClientProvider.class);
+      bind(new TypeLiteral<Collection<BinanceClient>>(){}).toProvider(BinanceClientProvider.class).asEagerSingleton();
+    }
 
+    @Exposed
+    @Provides
+    @Singleton
+    public Gson provideGson(Map<Class, JsonDeserializer> deserializers) {
+      GsonBuilder builder = new GsonBuilder();
+      deserializers.forEach(builder::registerTypeAdapter);
+      return builder.create();
+    }
+
+    private void configChronicle() {
+      install(new ChronicleStoreModule());
+      TypeLiteral<Disruptor<StringPayload>> disruptorTypeLiteral = new TypeLiteral<Disruptor<StringPayload>>() {};
+      expose(disruptorTypeLiteral);
+      expose(SingleChronicleQueue.class);
+      expose(WriteStore.class);
+    }
+
+    private void configKafka() {
       if (kafkaEnabled) {
         install(new KafkaCommonModule());
         install(new KafkaStreamModule());
@@ -139,22 +162,19 @@ public class BinanceService {
       } else {
         bind(TopOfBookProcessor.class).to(TopOfBookProcessor.NoOpProcessor.class);
       }
-
-      MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
-      binder.addBinding(OrderBookEvent.class).to(OrderBookEventAdapter.class);
-      binder.addBinding(DiffBookEvent.class).to(DiffBookEventAdapter.class);
-      bindExpose(BinanceClientProvider.class);
-      bind(new TypeLiteral<Collection<BinanceClient>>(){}).toProvider(BinanceClientProvider.class).asEagerSingleton();
-
     }
 
-    @Exposed
-    @Provides
-    @Singleton
-    public Gson provideGson(Map<Class, JsonDeserializer> deserializers) {
-      GsonBuilder builder = new GsonBuilder();
-      deserializers.forEach(builder::registerTypeAdapter);
-      return builder.create();
+    private void configUndertow() {
+      if (undertowEnabled) {
+        this.install(new UndertowModule(new HandlerModule() {
+
+          @Override
+          protected void configureHandlers() {
+            this.bindHandler().to(HealthCheckHandler.class);
+          }
+        }));
+        expose(Undertow.class);
+      }
     }
   }
 

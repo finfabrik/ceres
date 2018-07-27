@@ -2,8 +2,9 @@ package com.blokaly.ceres.binance.event;
 
 import com.blokaly.ceres.data.MarketDataIncremental;
 import com.blokaly.ceres.data.OrderInfo;
-import com.google.gson.JsonArray;
+import com.google.gson.*;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,5 +59,19 @@ public class DiffBookEvent {
 
   public MarketDataIncremental<OrderInfo> getDeletion() {
     return deletion;
+  }
+
+  public static class Adapter implements JsonDeserializer<DiffBookEvent> {
+
+    @Override
+    public DiffBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+      JsonObject jsonObject = json.getAsJsonObject();
+      long begin = jsonObject.get("U").getAsLong();
+      long end = jsonObject.get("u").getAsLong();
+      JsonArray bids = jsonObject.get("b").getAsJsonArray();
+      JsonArray asks = jsonObject.get("a").getAsJsonArray();
+      return DiffBookEvent.parse(begin, end, bids, asks);
+    }
   }
 }
