@@ -4,14 +4,14 @@ import com.google.gson.*;
 
 import java.lang.reflect.Type;
 
-public class MinuteBars {
+public class CandleBar {
   private final boolean success;
   private final String message;
   private final long timeFrom;
   private final long timeTo;
   private final Bar[] bars;
 
-  private MinuteBars(boolean success, String message, long timeFrom, long timeTo, Bar... bars) {
+  private CandleBar(boolean success, String message, long timeFrom, long timeTo, Bar... bars) {
     this.success = success;
     this.message = message;
     this.timeFrom = timeFrom;
@@ -19,12 +19,12 @@ public class MinuteBars {
     this.bars = bars;
   }
 
-  public static MinuteBars success(long from, long to, Bar... bars) {
-    return new MinuteBars(true, null, from, to, bars);
+  public static CandleBar success(long from, long to, Bar... bars) {
+    return new CandleBar(true, null, from, to, bars);
   }
 
-  public static MinuteBars fail(String message) {
-    return new MinuteBars(false, message, 0, 0);
+  public static CandleBar fail(String message) {
+    return new CandleBar(false, message, 0, 0);
   }
 
   public boolean isSuccess() {
@@ -85,19 +85,19 @@ public class MinuteBars {
     }
   }
 
-  public static class EventAdapter implements JsonDeserializer<MinuteBars> {
+  public static class EventAdapter implements JsonDeserializer<CandleBar> {
     @Override
-    public MinuteBars deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+    public CandleBar deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
       JsonObject res = json.getAsJsonObject();
       if (res.has("Response") && "Success".equalsIgnoreCase(res.get("Response").getAsString())) {
         JsonArray data = res.get("Data").getAsJsonArray();
-        MinuteBars.Bar[] bars = context.deserialize(data, MinuteBars.Bar[].class);
+        CandleBar.Bar[] bars = context.deserialize(data, CandleBar.Bar[].class);
         long fromEpochSec = res.get("TimeFrom").getAsLong();
         long toEpochSec = res.get("TimeTo").getAsLong();
-        return MinuteBars.success(fromEpochSec, toEpochSec, bars);
+        return CandleBar.success(fromEpochSec, toEpochSec, bars);
       } else {
         String msg = res.has("Message") ? res.get("Message").getAsString() : res.toString();
-        return MinuteBars.fail(msg);
+        return CandleBar.fail(msg);
       }
     }
   }

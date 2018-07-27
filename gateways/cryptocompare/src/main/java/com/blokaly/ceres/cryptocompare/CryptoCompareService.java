@@ -2,7 +2,7 @@ package com.blokaly.ceres.cryptocompare;
 
 import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.CeresModule;
-import com.blokaly.ceres.cryptocompare.api.MinuteBars;
+import com.blokaly.ceres.cryptocompare.api.CandleBar;
 import com.blokaly.ceres.influxdb.InfluxdbModule;
 import com.blokaly.ceres.system.Services;
 import com.google.gson.Gson;
@@ -46,7 +46,7 @@ public class CryptoCompareService extends AwaitExecutionService {
     @Override
     protected void configure() {
       MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
-      binder.addBinding(MinuteBars.class).to(MinuteBars.EventAdapter.class);
+      binder.addBinding(CandleBar.class).to(CandleBar.EventAdapter.class);
 
       install(new InfluxdbModule());
       expose(InfluxDB.class);

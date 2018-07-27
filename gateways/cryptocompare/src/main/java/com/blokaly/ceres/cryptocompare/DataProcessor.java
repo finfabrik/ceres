@@ -3,10 +3,11 @@ package com.blokaly.ceres.cryptocompare;
 import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.cryptocompare.api.HistoricalDataService;
-import com.blokaly.ceres.cryptocompare.api.MinuteBars;
+import com.blokaly.ceres.cryptocompare.api.CandleBar;
 import com.blokaly.ceres.influxdb.InfluxdbReader;
 import com.blokaly.ceres.influxdb.InfluxdbWriter;
 import com.google.common.collect.Table;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.typesafe.config.Config;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,8 +31,10 @@ public class DataProcessor {
   private static final String INFLUXDB_DATABASE = "influxdb.database";
   private static final String MINUTEBAR_DATA = "minutebar.data";
   private static final String MINUTEBAR_STATUS = "minutebar.status";
-  private static final String LAST_UPDATE_QUERY = "select  last(\"lastUpdated\") from \"" + MINUTEBAR_STATUS + "\" where sym=$symbol order by time";
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy h:mm:ss a");
+  private static final String MINUTEBAR_LAST_UPDATE_QUERY = "select  last(\"lastUpdated\") from \"" + MINUTEBAR_STATUS + "\" where sym=$symbol order by time";
+  private static final String HOURBAR_DATA = "hourbar.data";
+  private static final String HOURBAR_STATUS = "hourbar.status";
+  private static final String HOURBAR_LAST_UPDATE_QUERY = "select  last(\"lastUpdated\") from \"" + HOURBAR_STATUS + "\" where sym=$symbol order by time";
   private final HistoricalDataService service;
   private final ScheduledExecutorService executor;
   private final InfluxdbWriter writer;
@@ -82,13 +84,17 @@ public class DataProcessor {
       LOGGER.info("Not started, skip processing {}", symbol);
       return;
     }
+    processHourBar(symbol);
+    processMinuteBar(symbol);
+  }
 
+  private void processMinuteBar(String symbol) {
     try {
-      InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(LAST_UPDATE_QUERY);
+      InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(MINUTEBAR_LAST_UPDATE_QUERY);
       builder.set("symbol", symbol);
+      Table<String, String, Object> rs = this.reader.singleTable(builder.build());
 
       LocalDateTime begin;
-      Table<String, String, Object> rs = this.reader.singleTable(builder.build());
       if (!rs.isEmpty()) {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse((String) rs.values().toArray()[0]);
         begin = zonedDateTime.toLocalDateTime();
@@ -99,13 +105,13 @@ public class DataProcessor {
       PairSymbol pair = PairSymbol.parse(symbol, "/");
       LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
       while (begin.isBefore(startOfToday)) {
-        MinuteBars minuteBars = service.getHistoMinuteOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
+        CandleBar minuteBars = service.getHistoMinuteOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (minuteBars.isSuccess()) {
-          MinuteBars.Bar[] bars = minuteBars.getBars();
-          List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(bar, symbol)).collect(Collectors.toList());
+          CandleBar.Bar[] bars = minuteBars.getBars();
+          List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(MINUTEBAR_DATA, bar, symbol)).collect(Collectors.toList());
           writer.writeBatch(points);
           LocalDateTime lastTime = LocalDateTime.ofEpochSecond(minuteBars.getTimeTo(), 0, ZoneOffset.UTC);
-          Point status = updateStatus(symbol, lastTime);
+          Point status = updateStatus(MINUTEBAR_STATUS, symbol, lastTime);
           writer.write(status);
           LOGGER.info("Historical minute bars processed for {}", symbol);
           begin = lastTime;
@@ -115,14 +121,50 @@ public class DataProcessor {
         }
       }
     } catch (Exception ex) {
-      LOGGER.error("Failed to process minute chart bar", ex);
+      LOGGER.error("Failed to process history minute bar", ex);
     }
-
   }
 
-  private Point toInfluxdbPoint(MinuteBars.Bar bar, String symbol) {
+  private void processHourBar(String symbol) {
+    try {
+      InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(HOURBAR_LAST_UPDATE_QUERY);
+      builder.set("symbol", symbol);
+      Table<String, String, Object> rs = this.reader.singleTable(builder.build());
 
-    Point.Builder builder = Point.measurement(MINUTEBAR_DATA)
+      LocalDateTime begin;
+      if (!rs.isEmpty()) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse((String) rs.values().toArray()[0]);
+        begin = zonedDateTime.toLocalDateTime();
+      } else {
+        begin = LocalDate.now(UTC).minusDays(100).atStartOfDay();
+      }
+
+      PairSymbol pair = PairSymbol.parse(symbol, "/");
+      LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
+      while (begin.isBefore(startOfToday)) {
+        CandleBar hourBars = service.getHistoHourOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
+        if (hourBars.isSuccess()) {
+          CandleBar.Bar[] bars = hourBars.getBars();
+          List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(HOURBAR_DATA, bar, symbol)).collect(Collectors.toList());
+          writer.writeBatch(points);
+          LocalDateTime lastTime = LocalDateTime.ofEpochSecond(hourBars.getTimeTo(), 0, ZoneOffset.UTC);
+          Point status = updateStatus(HOURBAR_STATUS, symbol, lastTime);
+          writer.write(status);
+          LOGGER.info("Historical hour bars processed for {}", symbol);
+          begin = lastTime;
+        } else {
+          LOGGER.error("Error getting history hour bars for {}, {}", symbol, hourBars.getMessage());
+          break;
+        }
+      }
+    } catch (Exception ex) {
+      LOGGER.error("Failed to process history hour bars", ex);
+    }
+  }
+
+  private Point toInfluxdbPoint(String measurement, CandleBar.Bar bar, String symbol) {
+
+    Point.Builder builder = Point.measurement(measurement)
         .time(bar.getTime(), TimeUnit.SECONDS)
         .tag("sym", symbol);
     builder.addField("open", bar.getOpen());
@@ -134,9 +176,9 @@ public class DataProcessor {
     return builder.build();
   }
 
-  private Point updateStatus(String symbol, LocalDateTime last) {
-    Point.Builder builder = Point.measurement(MINUTEBAR_STATUS)
-        .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+  private Point updateStatus(String measurement, String symbol, LocalDateTime last) {
+    Point.Builder builder = Point.measurement(measurement)
+        .time(last.toEpochSecond(ZoneOffset.UTC), TimeUnit.SECONDS)
         .tag("sym", symbol);
     OffsetDateTime offsetDateTime = last.atOffset(ZoneOffset.UTC);
     builder.addField("lastUpdated", offsetDateTime.toString());
