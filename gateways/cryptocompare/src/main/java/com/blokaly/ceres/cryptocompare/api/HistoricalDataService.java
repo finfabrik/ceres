@@ -19,6 +19,7 @@ public class HistoricalDataService {
   private static final Logger LOGGER = LoggerFactory.getLogger(HistoricalDataService.class);
   private static final String HISTO_MINUTE = "/histominute";
   private static final String HISTO_HOUR = "/histohour";
+  private static final String HISTO_DAY = "/histoday";
   private static final ZoneId UTC = ZoneId.of("UTC");
   private static final long MINUTES_OF_DAY = TimeUnit.DAYS.toMinutes(1);
   private static final long HOURS_OF_DAY = TimeUnit.DAYS.toHours(1);
@@ -35,7 +36,7 @@ public class HistoricalDataService {
     this.gson = gson;
   }
 
-  public CandleBar getHistoMinuteOfDay(String base, String terms, LocalDate date) {
+  public CandleBar getHistoMinutesOfDay(String base, String terms, LocalDate date) {
     LocalDate today = LocalDate.now(UTC);
     if (date.isAfter(today) || date.isBefore(today.minusDays(7))) {
       throw new IllegalArgumentException("Date must be in the last week, but got " + date);
@@ -64,7 +65,7 @@ public class HistoricalDataService {
     }
   }
 
-  public CandleBar getHistoHourOfDay(String base, String terms, LocalDate date) {
+  public CandleBar getHistoHoursOfDay(String base, String terms, LocalDate date) {
     LocalDate today = LocalDate.now(UTC);
     if (date.isAfter(today)) {
       date = today;
@@ -91,6 +92,33 @@ public class HistoricalDataService {
     } else {
       return gson.fromJson(res, CandleBar.class);
     }
+  }
+
+  public CandleBar getHistoDaysOfYear(String base, String terms, LocalDate date) {
+    return getHistoDay(base, terms, date, 365);
+  }
+
+  public CandleBar getHistoDay(String base, String terms, LocalDate date, long limit) {
+    LocalDate today = LocalDate.now().atStartOfDay(UTC).toLocalDate();
+    if (date.isAfter(today)) {
+      date = today;
+    }
+
+    LocalDate startOfDay = date.atStartOfDay(UTC).toLocalDate();
+    if (!startOfDay.isEqual(date)) {
+      date = startOfDay;
+    }
+
+    long end = date.atStartOfDay(UTC).toEpochSecond();
+    LinkedHashMap<String, String> params = getParams(base, terms, end, limit);
+    String res = dispatchRequest(apiPrefix + HISTO_DAY, params);
+    LOGGER.debug("HistoDay result: {}", res);
+    if (res == null) {
+      return CandleBar.fail("null response");
+    } else {
+      return gson.fromJson(res, CandleBar.class);
+    }
+
   }
 
   private LinkedHashMap<String, String> getParams(String base, String terms, long end, long limit) {

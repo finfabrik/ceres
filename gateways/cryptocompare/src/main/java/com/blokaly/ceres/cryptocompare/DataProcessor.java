@@ -7,7 +7,6 @@ import com.blokaly.ceres.cryptocompare.api.CandleBar;
 import com.blokaly.ceres.influxdb.InfluxdbReader;
 import com.blokaly.ceres.influxdb.InfluxdbWriter;
 import com.google.common.collect.Table;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.typesafe.config.Config;
@@ -17,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,6 +34,10 @@ public class DataProcessor {
   private static final String HOURBAR_DATA = "hourbar.data";
   private static final String HOURBAR_STATUS = "hourbar.status";
   private static final String HOURBAR_LAST_UPDATE_QUERY = "select  last(\"lastUpdated\") from \"" + HOURBAR_STATUS + "\" where sym=$symbol order by time";
+  private static final String DAYBAR_DATA = "daybar.data";
+  private static final String DAYBAR_STATUS = "daybar.status";
+  private static final String DAYBAR_LAST_UPDATE_QUERY = "select  last(\"lastUpdated\") from \"" + DAYBAR_STATUS + "\" where sym=$symbol order by time";
+
   private final HistoricalDataService service;
   private final ScheduledExecutorService executor;
   private final InfluxdbWriter writer;
@@ -84,6 +87,7 @@ public class DataProcessor {
       LOGGER.info("Not started, skip processing {}", symbol);
       return;
     }
+    processDayBar(symbol);
     processHourBar(symbol);
     processMinuteBar(symbol);
   }
@@ -105,7 +109,7 @@ public class DataProcessor {
       PairSymbol pair = PairSymbol.parse(symbol, "/");
       LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
       while (begin.isBefore(startOfToday)) {
-        CandleBar minuteBars = service.getHistoMinuteOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
+        CandleBar minuteBars = service.getHistoMinutesOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (minuteBars.isSuccess()) {
           CandleBar.Bar[] bars = minuteBars.getBars();
           List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(MINUTEBAR_DATA, bar, symbol)).collect(Collectors.toList());
@@ -142,7 +146,7 @@ public class DataProcessor {
       PairSymbol pair = PairSymbol.parse(symbol, "/");
       LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
       while (begin.isBefore(startOfToday)) {
-        CandleBar hourBars = service.getHistoHourOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
+        CandleBar hourBars = service.getHistoHoursOfDay(pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (hourBars.isSuccess()) {
           CandleBar.Bar[] bars = hourBars.getBars();
           List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(HOURBAR_DATA, bar, symbol)).collect(Collectors.toList());
@@ -159,6 +163,58 @@ public class DataProcessor {
       }
     } catch (Exception ex) {
       LOGGER.error("Failed to process history hour bars", ex);
+    }
+  }
+
+  private void processDayBar(String symbol) {
+    try {
+      InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(DAYBAR_LAST_UPDATE_QUERY);
+      builder.set("symbol", symbol);
+      Table<String, String, Object> rs = this.reader.singleTable(builder.build());
+
+      LocalDateTime begin;
+      if (!rs.isEmpty()) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse((String) rs.values().toArray()[0]);
+        begin = zonedDateTime.toLocalDateTime();
+      } else {
+        begin = LocalDate.now(UTC).minusDays(365*5).atStartOfDay();
+      }
+
+      PairSymbol pair = PairSymbol.parse(symbol, "/");
+      LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
+      while (begin.isBefore(startOfToday.minusDays(365))) {
+        CandleBar dayBars = service.getHistoDaysOfYear(pair.getBase(), pair.getTerms(), begin.plusDays(365).toLocalDate());
+        LocalDateTime lastUpdate = processDayBars(symbol, dayBars);
+        if (lastUpdate != null) {
+          begin = lastUpdate;
+        } else {
+          break;
+        }
+      }
+
+      long days = begin.until(startOfToday, ChronoUnit.DAYS);
+      if (days > 0) {
+        CandleBar dayBars = service.getHistoDay(pair.getBase(), pair.getTerms(), startOfToday.toLocalDate(), days);
+        processDayBars(symbol, dayBars);
+      }
+    } catch (Exception ex) {
+      LOGGER.error("Failed to process history day bars", ex);
+    }
+  }
+
+  private LocalDateTime processDayBars(String symbol, CandleBar dayBars) {
+    if (dayBars.isSuccess()) {
+      CandleBar.Bar[] bars = dayBars.getBars();
+      List<Point> points = Arrays.stream(bars).filter(bar -> bar.getHigh()>0).map(bar -> toInfluxdbPoint(DAYBAR_DATA, bar, symbol)).collect(Collectors.toList());
+      writer.writeBatch(points);
+      LocalDateTime lastTime = LocalDateTime.ofEpochSecond(dayBars.getTimeTo(), 0, ZoneOffset.UTC);
+      Point status = updateStatus(DAYBAR_STATUS, symbol, lastTime);
+      writer.write(status);
+      LOGGER.info("Historical day bars processed for {}", symbol);
+      return lastTime;
+    } else {
+      LOGGER.error("Error getting history day bars for {}, {}", symbol, dayBars.getMessage());
+      return null;
     }
   }
 
