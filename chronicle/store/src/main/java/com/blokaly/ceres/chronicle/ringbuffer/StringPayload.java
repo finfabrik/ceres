@@ -32,6 +32,7 @@ public class StringPayload {
   public void writeBytes(ExcerptAppender appender) {
     try {
       appender.writeBytes(wrapper);
+      LOGGER.debug("Bytes appended: {}", appender);
     } catch (Exception ex) {
       LOGGER.error("failed to persist msg", ex);
     } finally {

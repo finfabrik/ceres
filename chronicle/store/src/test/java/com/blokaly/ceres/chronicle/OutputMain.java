@@ -1,10 +1,11 @@
 package com.blokaly.ceres.chronicle;
 
+import com.blokaly.ceres.common.Triple;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.pool.BytesPool;
 import net.openhft.chronicle.bytes.util.Compressions;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.RollCycles;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 
@@ -12,35 +13,48 @@ public class OutputMain {
   private static final BytesPool BP = new BytesPool();
 
   public static void main(String[] args) {
-    String path = "/opt/projects/github.com/finfabrik/ceres/binance_marketdata";
-    SingleChronicleQueue queue = SingleChronicleQueueBuilder.binary(path).build();
+    String path = "/opt/projects/github.com/finfabrik/ceres/test_queue";
+    SingleChronicleQueue queue = SingleChronicleQueueBuilder.binary(path).rollCycle(RollCycles.LARGE_HOURLY).build();
+    long total = queue.entryCount();
+    System.out.println("total entries: " + total);
     ExcerptTailer tailer = queue.createTailer();
-    long counter = 0;
 
+    long counter = 0;
     while (true) {
       Bytes bytes = BP.acquireBytes();
       boolean read = tailer.readBytes(bytes);
       if (read) {
         counter++;
-        System.out.println("decoded[" + counter + "]: " + decompress(bytes));
+        Triple<PayloadType, Long, String> tuple = decompress(bytes);
+        if (tuple.getLeft() != PayloadType.JSON) {
+          System.out.println("decoded[" + counter + "/" + total + "]: " + tuple);
+        }
       }
       else {
-        Jvm.pause(10);
+        int queueCycle = queue.cycle();
+        int tailerCycle = tailer.cycle();
+        if (tailerCycle != queueCycle) {
+//          System.out.println("cycle different, queue " + queueCycle + " tailer " + tailerCycle);
+          long index = queue.rollCycle().toIndex(queueCycle, 0);
+          tailer.moveToIndex(index);
+        } else {
+          break;
+        }
       }
     }
   }
 
-  private static String decompress(Bytes bytes) {
+  private static Triple<PayloadType, Long, String> decompress(Bytes bytes) {
     byte type = bytes.readByte();
     PayloadType payloadType = PayloadType.parse(type);
     long time = bytes.readLong();
-    System.out.println("time: " + time + ", type: " + payloadType);
     if (payloadType == PayloadType.JSON) {
       byte[] uncompress = Compressions.Snappy.uncompress(bytes.bytesForRead().toByteArray());
-      return new String(uncompress);
+      return new Triple<PayloadType, Long, String>(payloadType, time, new String(uncompress));
     } else {
-      return null;
+      return new Triple<PayloadType, Long, String>(payloadType, time, null);
     }
   }
+
 }
 
