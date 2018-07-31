@@ -24,7 +24,8 @@ public enum Source {
   BITTREX("BTRX", 12),
   OKCOIN("OKCN", 13),
   OKEX("OKEX", 14),
-  KUCOIN("KOCO", 15)
+  KUCOIN("KOCO", 15),
+  BITMEX("BTMX", 16)
   ;
 
   private static final Map<String, Source> CODE_MAP = new HashMap<String, Source>();
