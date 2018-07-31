@@ -1,5 +1,7 @@
 package com.blokaly.ceres.bitmex;
 
+import com.blokaly.ceres.chronicle.PayloadType;
+import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.inject.Inject;
 import org.java_websocket.client.WebSocketClient;
@@ -13,13 +15,15 @@ public class BitmexClient extends WebSocketClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BitmexClient.class);
   private static final String client = "bitmex";
+  private final WriteStore store;
   private final JsonCracker cracker;
   private final WSConnectionListener listener;
   private volatile boolean stop = false;
 
   @Inject
-  public BitmexClient(URI serverURI, JsonCracker cracker, WSConnectionListener listener) {
+  public BitmexClient(URI serverURI, WriteStore store, JsonCracker cracker, WSConnectionListener listener) {
     super(serverURI);
+    this.store = store;
     this.cracker = cracker;
     this.listener = listener;
     LOGGER.info("client initiated");
@@ -37,12 +41,20 @@ public class BitmexClient extends WebSocketClient {
 
   @Override
   public void onMessage(String message) {
-
+    LOGGER.debug("ws message: {}", message);
+    store.save(PayloadType.JSON, message);
+    if (!stop) {
+      cracker.crack(message);
+    }
   }
 
   @Override
   public void onClose(int code, String reason, boolean remote) {
-
+    LOGGER.info("ws close: {}", reason);
+    if (listener != null) {
+      listener.onDisconnected(client);
+    }
+    cracker.onClose();
   }
 
   @Override
