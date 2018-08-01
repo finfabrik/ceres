@@ -10,7 +10,7 @@ memoryUsage = "512m"
 
 docker {
     javaApplication {
-        baseImage = 'openjdk:8-slim'
+        baseImage = 'store/oracle/serverjre:8'
         tag = "${dockerRepo}/ceres-${applicationName}:${version}"
     }
 }

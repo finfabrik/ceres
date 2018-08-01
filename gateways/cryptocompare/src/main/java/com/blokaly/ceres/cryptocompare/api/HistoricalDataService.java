@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class HistoricalDataService {
   private static final Logger LOGGER = LoggerFactory.getLogger(HistoricalDataService.class);
+  private static final String DEFAULT_VENUE = "CCCAGG";
   private static final String HISTO_MINUTE = "/histominute";
   private static final String HISTO_HOUR = "/histohour";
   private static final String HISTO_DAY = "/histoday";
@@ -36,17 +37,17 @@ public class HistoricalDataService {
     this.gson = gson;
   }
 
-  public CandleBar getHistoMinutesOfDay(String base, String terms, LocalDate date) {
+  public CandleBar getHistoMinutesOfDay(String venue, String base, String terms, LocalDate date) {
     LocalDate today = LocalDate.now(UTC);
     if (date.isAfter(today) || date.isBefore(today.minusDays(7))) {
       throw new IllegalArgumentException("Date must be in the last week, but got " + date);
     }
 
     ZonedDateTime endTime = date.atStartOfDay(UTC).plusDays(1);
-    return getHistoMinute(base, terms, endTime.toLocalDateTime(), MINUTES_OF_DAY);
+    return getHistoMinute(venue, base, terms, endTime.toLocalDateTime(), MINUTES_OF_DAY);
   }
 
-  public CandleBar getHistoMinute(String base, String terms, LocalDateTime toUtc, long limit) {
+  public CandleBar getHistoMinute(String venue, String base, String terms, LocalDateTime toUtc, long limit) {
     long now = LocalDateTime.now(UTC).truncatedTo(ChronoUnit.MINUTES).toEpochSecond(ZoneOffset.UTC);
     long end = toUtc.truncatedTo(ChronoUnit.MINUTES).toEpochSecond(ZoneOffset.UTC);
     if (now <= end) {
@@ -55,7 +56,7 @@ public class HistoricalDataService {
       long startOfDay = LocalDate.now(UTC).atStartOfDay(UTC).toEpochSecond();
       limit = ( end - startOfDay ) / secondsPerMinute;
     }
-    LinkedHashMap<String, String> params = getParams(base, terms, end, limit);
+    LinkedHashMap<String, String> params = getParams(venue, base, terms, end, limit);
     String res = dispatchRequest(apiPrefix + HISTO_MINUTE, params);
     LOGGER.debug("HistoMinute result: {}", res);
     if (res == null) {
@@ -65,17 +66,17 @@ public class HistoricalDataService {
     }
   }
 
-  public CandleBar getHistoHoursOfDay(String base, String terms, LocalDate date) {
+  public CandleBar getHistoHoursOfDay(String venue, String base, String terms, LocalDate date) {
     LocalDate today = LocalDate.now(UTC);
     if (date.isAfter(today)) {
       date = today;
     }
 
     ZonedDateTime endTime = date.atStartOfDay(UTC).plusDays(1);
-    return getHistoHour(base, terms, endTime.toLocalDateTime(), HOURS_OF_DAY);
+    return getHistoHour(venue, base, terms, endTime.toLocalDateTime(), HOURS_OF_DAY);
   }
 
-  public CandleBar getHistoHour(String base, String terms, LocalDateTime toUtc, long limit) {
+  public CandleBar getHistoHour(String venue, String base, String terms, LocalDateTime toUtc, long limit) {
     long now = LocalDateTime.now(UTC).truncatedTo(ChronoUnit.HOURS).toEpochSecond(ZoneOffset.UTC);
     long end = toUtc.truncatedTo(ChronoUnit.HOURS).toEpochSecond(ZoneOffset.UTC);
     if (now <= end) {
@@ -84,7 +85,7 @@ public class HistoricalDataService {
       long startOfDay = LocalDate.now(UTC).atStartOfDay(UTC).toEpochSecond();
       limit = ( end - startOfDay ) / secondsPerHour;
     }
-    LinkedHashMap<String, String> params = getParams(base, terms, end, limit);
+    LinkedHashMap<String, String> params = getParams(venue, base, terms, end, limit);
     String res = dispatchRequest(apiPrefix + HISTO_HOUR, params);
     LOGGER.debug("HistoHour result: {}", res);
     if (res == null) {
@@ -94,11 +95,11 @@ public class HistoricalDataService {
     }
   }
 
-  public CandleBar getHistoDaysOfYear(String base, String terms, LocalDate date) {
-    return getHistoDay(base, terms, date, 365);
+  public CandleBar getHistoDaysOfYear(String venue, String base, String terms, LocalDate date) {
+    return getHistoDay(venue, base, terms, date, 365);
   }
 
-  public CandleBar getHistoDay(String base, String terms, LocalDate date, long limit) {
+  public CandleBar getHistoDay(String venue, String base, String terms, LocalDate date, long limit) {
     LocalDate today = LocalDate.now().atStartOfDay(UTC).toLocalDate();
     if (date.isAfter(today)) {
       date = today;
@@ -110,7 +111,7 @@ public class HistoricalDataService {
     }
 
     long end = date.atStartOfDay(UTC).toEpochSecond();
-    LinkedHashMap<String, String> params = getParams(base, terms, end, limit);
+    LinkedHashMap<String, String> params = getParams(venue, base, terms, end, limit);
     String res = dispatchRequest(apiPrefix + HISTO_DAY, params);
     LOGGER.debug("HistoDay result: {}", res);
     if (res == null) {
@@ -121,8 +122,11 @@ public class HistoricalDataService {
 
   }
 
-  private LinkedHashMap<String, String> getParams(String base, String terms, long end, long limit) {
+  private LinkedHashMap<String, String> getParams(String venue, String base, String terms, long end, long limit) {
     LinkedHashMap<String, String> params = new LinkedHashMap<>();
+    if (!DEFAULT_VENUE.equals(venue)) {
+      params.put("e", venue);
+    }
     params.put("fsym", base.toUpperCase());
     params.put("tsym", terms.toUpperCase());
     params.put("toTs", String.valueOf(end));
