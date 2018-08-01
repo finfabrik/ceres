@@ -1,5 +1,6 @@
 package com.blokaly.ceres.binance;
 
+import com.blokaly.ceres.binance.event.StreamEvent;
 import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.chronicle.WriteStoreProvider;
 import com.blokaly.ceres.common.Source;
@@ -59,7 +60,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     symbols.forEach(sym -> {
       try {
         String symbol = SymbolFormatter.normalise(sym);
-        URI uri = new URI(String.format(wsUrl, sym));
+        URI uri = new URI(wsUrl + getStreams(sym));
         OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), processor, gson, storeProvider.get(), esProvider.get());
         BinanceClient client = new BinanceClient(uri, handler, storeProvider.get(), gson, this);
         clients.put(symbol, client);
@@ -67,6 +68,10 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
         LOGGER.error("Error creating websocket for symbol: " + sym, ex);
       }
     });
+  }
+
+  private String getStreams(String symbol) {
+    return symbol + StreamEvent.DEPTH_STREAM + "/" + symbol + StreamEvent.TRADE_STREAM;
   }
 
   @Override

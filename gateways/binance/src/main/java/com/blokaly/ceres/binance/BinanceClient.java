@@ -1,10 +1,14 @@
 package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.DiffBookEvent;
+import com.blokaly.ceres.binance.event.StreamEvent;
 import com.blokaly.ceres.chronicle.PayloadType;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.inject.Provider;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -22,6 +26,7 @@ public class BinanceClient extends WebSocketClient {
   private final WriteStore store;
   private final Gson gson;
   private final WSConnectionListener listener;
+  private final JsonParser parser = new JsonParser();
 
   public BinanceClient(URI serverURI,
                        OrderBookHandler handler,
@@ -51,8 +56,10 @@ public class BinanceClient extends WebSocketClient {
   public void onMessage(String message) {
     LOGGER.debug("ws message: {}", message);
     store.save(PayloadType.JSON, message);
-    if (!stop) {
-      DiffBookEvent diffBookEvent = gson.fromJson(message, DiffBookEvent.class);
+
+    StreamEvent event = gson.fromJson(message, StreamEvent.class);
+    if (!stop && event.getStream().endsWith(StreamEvent.DEPTH_STREAM)) {
+      DiffBookEvent diffBookEvent = gson.fromJson(event.getData(), DiffBookEvent.class);
       handler.handle(diffBookEvent);
     }
   }

@@ -2,6 +2,7 @@ package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.OrderBookEvent;
+import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
 import com.blokaly.ceres.chronicle.ChronicleStoreModule;
@@ -44,7 +45,7 @@ public class BinanceService {
     undertowEnabled = Configs.getOrDefault(config, "undertow.enabled", Configs.BOOLEAN_EXTRACTOR, true);
   }
 
-  public static class Client extends BootstrapService {
+  public static class Client extends AwaitExecutionService {
     private final BinanceClientProvider provider;
 
     @Inject
