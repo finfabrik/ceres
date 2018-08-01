@@ -13,11 +13,11 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
+@Singleton
 public class BinanceClientProvider extends WSConnectionAdapter implements Provider<Collection<BinanceClient>> {
   private static final Logger LOGGER = LoggerFactory.getLogger(BinanceClientProvider.class);
   private final String wsUrl;
@@ -55,7 +56,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     clients = Maps.newHashMap();
   }
 
-  @PostConstruct
   private void init() {
     symbols.forEach(sym -> {
       try {
@@ -80,15 +80,20 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   }
 
   public void start() {
-    diabled = false;
-    storeProvider.begin();
-    clients.values().forEach(BinanceClient::connect);
+    if (diabled) {
+      init();
+      diabled = false;
+      storeProvider.begin();
+      clients.values().forEach(BinanceClient::connect);
+    }
   }
 
   public void stop() {
-    diabled = true;
-    clients.values().forEach(BinanceClient::stop);
-    storeProvider.end();
+    if (!diabled) {
+      diabled = true;
+      clients.values().forEach(BinanceClient::stop);
+      storeProvider.end();
+    }
   }
 
   @Override

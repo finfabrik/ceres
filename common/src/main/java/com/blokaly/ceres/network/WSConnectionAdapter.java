@@ -14,6 +14,7 @@ public abstract class WSConnectionAdapter implements WSConnectionListener {
 
   protected WSConnectionAdapter(ScheduledExecutorService executorService) {
     this.executorService = executorService;
+    this.diabled = true;
   }
 
   @Override
