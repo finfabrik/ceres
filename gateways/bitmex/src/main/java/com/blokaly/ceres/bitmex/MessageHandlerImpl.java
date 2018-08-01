@@ -39,7 +39,6 @@ public class MessageHandlerImpl implements MessageHandler {
   @Override
   public void onMessage(Close close) {
     LOGGER.info("WS session close");
-
   }
 
   @Override

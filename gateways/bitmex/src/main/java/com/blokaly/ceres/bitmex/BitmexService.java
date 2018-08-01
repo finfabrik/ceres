@@ -1,5 +1,6 @@
 package com.blokaly.ceres.bitmex;
 
+import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
 import com.blokaly.ceres.bitmex.event.Snapshot;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class BitmexService {
 
-  public static class Client extends BootstrapService {
+  public static class Client extends AwaitExecutionService {
     private final BitmexClientProvider provider;
 
     @Inject
