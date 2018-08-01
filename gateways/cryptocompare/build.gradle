@@ -4,7 +4,7 @@ dependencies {
 }
 
 mainClassName = 'com.blokaly.ceres.cryptocompare.CryptoCompareService'
-applicationName = "cccaggfg"
+applicationName = "cccaggfh"
 
 memoryUsage = "512m"
 
