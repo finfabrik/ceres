@@ -128,7 +128,7 @@ public class DataProcessor {
         CandleBar minuteBars = service.getHistoMinutesOfDay(venue, pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (minuteBars.isSuccess()) {
           CandleBar.Bar[] bars = minuteBars.getBars();
-          List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(MINUTEBAR_DATA, bar, venue, symbol)).collect(Collectors.toList());
+          List<Point> points = Arrays.stream(bars).filter(bar -> bar.getHigh()>0).map(bar -> toInfluxdbPoint(MINUTEBAR_DATA, bar, venue, symbol)).collect(Collectors.toList());
           writer.writeBatch(points);
           LocalDateTime lastTime = LocalDateTime.ofEpochSecond(minuteBars.getTimeTo(), 0, ZoneOffset.UTC);
           Point status = updateStatus(MINUTEBAR_STATUS, venue, symbol, lastTime);
@@ -166,7 +166,7 @@ public class DataProcessor {
         CandleBar hourBars = service.getHistoHoursOfDay(venue, pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (hourBars.isSuccess()) {
           CandleBar.Bar[] bars = hourBars.getBars();
-          List<Point> points = Arrays.stream(bars).map(bar -> toInfluxdbPoint(HOURBAR_DATA, bar, venue, symbol)).collect(Collectors.toList());
+          List<Point> points = Arrays.stream(bars).filter(bar -> bar.getHigh()>0).map(bar -> toInfluxdbPoint(HOURBAR_DATA, bar, venue, symbol)).collect(Collectors.toList());
           writer.writeBatch(points);
           LocalDateTime lastTime = LocalDateTime.ofEpochSecond(hourBars.getTimeTo(), 0, ZoneOffset.UTC);
           Point status = updateStatus(HOURBAR_STATUS, venue, symbol, lastTime);
