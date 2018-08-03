@@ -5,7 +5,6 @@ import com.blokaly.ceres.bitfinex.event.AbstractEvent;
 import com.blokaly.ceres.bitfinex.event.EventType;
 import com.blokaly.ceres.bitfinex.event.NoOpEvent;
 import com.google.gson.*;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,6 @@ public class EventAdapter implements JsonDeserializer<AbstractEvent>{
 
     private final NoOpEvent noOpEvent = new NoOpEvent();
 
-    @Inject
     public EventAdapter(Map<EventType, CommandCallbackHandler> handlers) {
         this.handlers = handlers;
     }

@@ -13,7 +13,7 @@ public class OutputMain {
   private static final BytesPool BP = new BytesPool();
 
   public static void main(String[] args) {
-    String path = "/opt/projects/github.com/finfabrik/ceres/test_queue";
+    String path = "/opt/projects/github.com/finfabrik/ceres/test_data";
     SingleChronicleQueue queue = SingleChronicleQueueBuilder.binary(path).rollCycle(RollCycles.LARGE_HOURLY).build();
     long total = queue.entryCount();
     System.out.println("total entries: " + total);
@@ -25,16 +25,13 @@ public class OutputMain {
       boolean read = tailer.readBytes(bytes);
       if (read) {
         counter++;
-        Triple<PayloadType, Long, String> tuple = decompress(bytes);
-        if (tuple.getLeft() != PayloadType.JSON) {
-          System.out.println("decoded[" + counter + "/" + total + "]: " + tuple);
-        }
+        Triple<PayloadType, Long, String> decoded = decompress(bytes);
+        System.out.println("decoded[" + counter + "/" + total + "]: " + decoded);
       }
       else {
         int queueCycle = queue.cycle();
         int tailerCycle = tailer.cycle();
         if (tailerCycle != queueCycle) {
-//          System.out.println("cycle different, queue " + queueCycle + " tailer " + tailerCycle);
           long index = queue.rollCycle().toIndex(queueCycle, 0);
           tailer.moveToIndex(index);
         } else {
@@ -48,11 +45,15 @@ public class OutputMain {
     byte type = bytes.readByte();
     PayloadType payloadType = PayloadType.parse(type);
     long time = bytes.readLong();
-    if (payloadType == PayloadType.JSON) {
-      byte[] uncompress = Compressions.Snappy.uncompress(bytes.bytesForRead().toByteArray());
-      return new Triple<PayloadType, Long, String>(payloadType, time, new String(uncompress));
-    } else {
-      return new Triple<PayloadType, Long, String>(payloadType, time, null);
+
+    switch (payloadType) {
+      case BEGIN:
+      case END:
+        return new Triple<PayloadType, Long, String>(payloadType, time, null);
+      default: {
+        byte[] uncompress = Compressions.Snappy.uncompress(bytes.bytesForRead().toByteArray());
+        return new Triple<PayloadType, Long, String>(payloadType, time, new String(uncompress));
+      }
     }
   }
 

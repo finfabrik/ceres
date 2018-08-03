@@ -1,6 +1,7 @@
 package com.blokaly.ceres.bitfinex;
 
 import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.chronicle.WriteStoreProvider;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -15,11 +16,13 @@ import java.util.concurrent.ScheduledExecutorService;
 public class BitfinexClientProvider extends WSConnectionAdapter implements Provider<BitfinexClient> {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitfinexClientProvider.class);
   private final BitfinexClient client;
+  private final WriteStoreProvider storeProvider;
 
   @Inject
-  public BitfinexClientProvider(URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
+  public BitfinexClientProvider(URI serverURI, WriteStoreProvider storeProvider, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
     super(executorService);
-    client = new BitfinexClient(serverURI, cracker, this);
+    this.storeProvider = storeProvider;
+    client = new BitfinexClient(serverURI, storeProvider.get(), cracker, this);
   }
 
   @Override
@@ -28,13 +31,17 @@ public class BitfinexClientProvider extends WSConnectionAdapter implements Provi
   }
 
   public void start() {
+    LOGGER.info("Starting...");
     diabled = false;
+    storeProvider.begin();
     client.connect();
   }
 
   public void stop() {
+    LOGGER.info("Stopping...");
     diabled = true;
     client.stop();
+    storeProvider.end();
   }
 
   @Override

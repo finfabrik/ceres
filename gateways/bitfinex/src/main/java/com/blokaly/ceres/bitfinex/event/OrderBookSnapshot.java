@@ -13,25 +13,25 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class SnapshotEvent extends ChannelEvent implements MarketDataSnapshot<IdBasedOrderInfo> {
+public class OrderBookSnapshot extends ChannelEvent implements MarketDataSnapshot<IdBasedOrderInfo> {
 
     private final long sequence;
     private final Collection<IdBasedOrderInfo> bids;
     private final Collection<IdBasedOrderInfo> asks;
 
-    public static SnapshotEvent parse(int channelId, long sequence, JsonArray data) {
+    public static OrderBookSnapshot parse(int channelId, long sequence, JsonArray data) {
         if (data == null || data.size()==0) {
-            return new SnapshotEvent(channelId, 0, Collections.emptyList(), Collections.emptyList());
+            return new OrderBookSnapshot(channelId, 0, Collections.emptyList(), Collections.emptyList());
         }
 
         Map<Boolean, List<IdBasedOrderInfo>> bidAndAsk = StreamSupport.stream(data.spliterator(), false)
                 .map(elm -> new SnapshotOrderInfo(elm.getAsJsonArray()))
                 .collect(Collectors.partitioningBy(snapshotOrderInfo -> snapshotOrderInfo.side() == OrderInfo.Side.BUY));
 
-        return new SnapshotEvent(channelId, sequence, bidAndAsk.get(true), bidAndAsk.get(false));
+        return new OrderBookSnapshot(channelId, sequence, bidAndAsk.get(true), bidAndAsk.get(false));
     }
 
-    private SnapshotEvent(int channelId, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
+    private OrderBookSnapshot(int channelId, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
         super(channelId, "snapshot");
         this.sequence = sequence;
         this.bids = bids;
@@ -55,7 +55,7 @@ public class SnapshotEvent extends ChannelEvent implements MarketDataSnapshot<Id
 
     @Override
     public String toString() {
-        return "SnapshotEvent{" +
+        return "OrderBookSnapshot{" +
                 "channelId=" + channelId +
                 '}';
     }

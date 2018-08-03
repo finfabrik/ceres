@@ -6,10 +6,6 @@ import com.blokaly.ceres.chronicle.PayloadType;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.inject.Provider;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -26,7 +22,6 @@ public class BinanceClient extends WebSocketClient {
   private final WriteStore store;
   private final Gson gson;
   private final WSConnectionListener listener;
-  private final JsonParser parser = new JsonParser();
 
   public BinanceClient(URI serverURI,
                        OrderBookHandler handler,
@@ -46,9 +41,11 @@ public class BinanceClient extends WebSocketClient {
   @Override
   public void onOpen(ServerHandshake handshake) {
     LOGGER.info("ws open, status - {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
+    String symbol = handler.getSymbol();
+    store.save(PayloadType.OPEN, symbol);
     handler.init();
     if (listener != null) {
-      listener.onConnected(handler.getSymbol());
+      listener.onConnected(symbol);
     }
   }
 
@@ -67,9 +64,11 @@ public class BinanceClient extends WebSocketClient {
   @Override
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
+    String symbol = handler.getSymbol();
+    store.save(PayloadType.CLOSE, symbol);
     handler.reset();
     if (listener != null) {
-      listener.onDisconnected(handler.getSymbol());
+      listener.onDisconnected(symbol);
     }
   }
 

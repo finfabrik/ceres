@@ -52,13 +52,13 @@ public class JsonCracker {
                     messageHandler.onMessage((InfoEvent) event);
                     break;
                 case SUBSCRIBED:
-                    messageHandler.onMessage((SubscribedEvent) event);
+                    messageHandler.onMessage((SubscriptionEvent) event);
                     break;
                 case SNAPSHOT:
-                    messageHandler.onMessage((SnapshotEvent) event);
+                    messageHandler.onMessage((OrderBookSnapshot) event);
                     break;
                 case REFRESH:
-                    messageHandler.onMessage((RefreshEvent) event);
+                    messageHandler.onMessage((OrderBookRefresh) event);
                     break;
                 case ERROR:
                     messageHandler.onMessage((ErrorEvent) event);

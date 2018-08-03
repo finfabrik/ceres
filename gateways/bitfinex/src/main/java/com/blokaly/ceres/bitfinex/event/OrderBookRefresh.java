@@ -13,7 +13,7 @@ import java.util.Collections;
 import static com.blokaly.ceres.data.MarketDataIncremental.Type.DONE;
 import static com.blokaly.ceres.data.MarketDataIncremental.Type.UPDATE;
 
-public class RefreshEvent extends ChannelEvent implements MarketDataIncremental<IdBasedOrderInfo> {
+public class OrderBookRefresh extends ChannelEvent implements MarketDataIncremental<IdBasedOrderInfo> {
 
     private final JsonArray data;
     private final long sequence;
@@ -28,7 +28,7 @@ public class RefreshEvent extends ChannelEvent implements MarketDataIncremental<
         }
     }
 
-    public RefreshEvent(int channelId, long sequence, JsonArray data) {
+    public OrderBookRefresh(int channelId, long sequence, JsonArray data) {
         super(channelId, "refresh");
         this.data = data;
         this.sequence = sequence;
@@ -61,7 +61,7 @@ public class RefreshEvent extends ChannelEvent implements MarketDataIncremental<
 
     @Override
     public String toString() {
-        return "RefreshEvent(" + sequence + ")" + orderInfo;
+        return "OrderBookRefresh(" + sequence + ")" + orderInfo;
     }
 
     private static DecimalNumber parseDecimal(JsonArray data, int field) {

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum PayloadType {
-  BEGIN('B'), END('E'), JSON('J');
+  BEGIN('B'), END('E'), JSON('J'), OPEN('O'), CLOSE('C');
 
   private static final Map<Character, PayloadType> lookup = new HashMap<Character, PayloadType>();
 

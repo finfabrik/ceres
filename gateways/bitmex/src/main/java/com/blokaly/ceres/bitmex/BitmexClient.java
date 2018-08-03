@@ -16,15 +16,15 @@ public class BitmexClient extends WebSocketClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BitmexClient.class);
   private static final String client = "bitmex";
-  private final WriteStoreProvider storeProvider;
+  private final WriteStore store;
   private final JsonCracker cracker;
   private final WSConnectionListener listener;
   private volatile boolean stop = false;
 
   @Inject
-  public BitmexClient(URI serverURI, WriteStoreProvider storeProvider, JsonCracker cracker, WSConnectionListener listener) {
+  public BitmexClient(URI serverURI, WriteStore store, JsonCracker cracker, WSConnectionListener listener) {
     super(serverURI);
-    this.storeProvider = storeProvider;
+    this.store = store;
     this.cracker = cracker;
     this.listener = listener;
     LOGGER.info("client initiated");
@@ -34,7 +34,7 @@ public class BitmexClient extends WebSocketClient {
   @Override
   public void onOpen(ServerHandshake handshakedata) {
     LOGGER.info("ws open, status: {}:{}", handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
-    storeProvider.begin();
+    store.save(PayloadType.OPEN, client);
     if (listener != null) {
       listener.onConnected(client);
     }
@@ -44,7 +44,7 @@ public class BitmexClient extends WebSocketClient {
   @Override
   public void onMessage(String message) {
     LOGGER.debug("ws message: {}", message);
-    storeProvider.get().save(PayloadType.JSON, message);
+    store.save(PayloadType.JSON, message);
     if (!stop) {
       cracker.crack(message);
     }
@@ -53,7 +53,7 @@ public class BitmexClient extends WebSocketClient {
   @Override
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
-    storeProvider.end();
+    store.save(PayloadType.CLOSE, client);
     if (listener != null) {
       listener.onDisconnected(client);
     }

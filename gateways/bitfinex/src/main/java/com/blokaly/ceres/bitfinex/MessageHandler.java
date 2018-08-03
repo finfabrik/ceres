@@ -8,11 +8,11 @@ public interface MessageHandler {
 
     void onMessage(InfoEvent event);
 
-    void onMessage(SnapshotEvent event);
+    void onMessage(OrderBookSnapshot event);
 
-    void onMessage(RefreshEvent event);
+    void onMessage(OrderBookRefresh event);
 
-    void onMessage(SubscribedEvent event);
+    void onMessage(SubscriptionEvent event);
 
     void onMessage(PingEvent event);
 

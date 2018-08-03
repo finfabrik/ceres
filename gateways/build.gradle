@@ -82,7 +82,3 @@ buildscript {
         classpath 'com.bmuschko:gradle-docker-plugin:3.2.5'
     }
 }
-
-dependencies {
-    compile project(':common')
-}
