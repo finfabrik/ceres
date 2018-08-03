@@ -12,7 +12,7 @@ applicationName = "bitfinexfh"
 
 docker {
     javaApplication {
-        baseImage = 'blokaly/java8:latest'
+        baseImage = 'store/oracle/serverjre:8'
         tag = "${dockerRepo}/ceres-${applicationName}:${version}"
     }
 }
