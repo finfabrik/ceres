@@ -102,12 +102,13 @@ public class DataProcessor {
       LOGGER.info("Not started, skip processing {}", symbol);
       return;
     }
-    processDayBar(exchange, symbol);
-    processHourBar(exchange, symbol);
-    processMinuteBar(exchange, symbol);
+    LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
+    processDayBar(exchange, symbol, startOfToday);
+    processHourBar(exchange, symbol, startOfToday);
+    processMinuteBar(exchange, symbol, startOfToday);
   }
 
-  private void processMinuteBar(String venue, String symbol) {
+  private void processMinuteBar(String venue, String symbol, LocalDateTime startTime) {
     try {
       InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(MINUTEBAR_LAST_UPDATE_QUERY);
       builder.set("exchange", venue);
@@ -123,8 +124,7 @@ public class DataProcessor {
       }
 
       PairSymbol pair = PairSymbol.parse(symbol, "/");
-      LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
-      while (begin.isBefore(startOfToday)) {
+      while (begin.isBefore(startTime)) {
         CandleBar minuteBars = service.getHistoMinutesOfDay(venue, pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (minuteBars.isSuccess()) {
           CandleBar.Bar[] bars = minuteBars.getBars();
@@ -145,7 +145,7 @@ public class DataProcessor {
     }
   }
 
-  private void processHourBar(String venue, String symbol) {
+  private void processHourBar(String venue, String symbol, LocalDateTime startTime) {
     try {
       InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(HOURBAR_LAST_UPDATE_QUERY);
       builder.set("exchange", venue);
@@ -161,8 +161,7 @@ public class DataProcessor {
       }
 
       PairSymbol pair = PairSymbol.parse(symbol, "/");
-      LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
-      while (begin.isBefore(startOfToday)) {
+      while (begin.isBefore(startTime)) {
         CandleBar hourBars = service.getHistoHoursOfDay(venue, pair.getBase(), pair.getTerms(), begin.toLocalDate());
         if (hourBars.isSuccess()) {
           CandleBar.Bar[] bars = hourBars.getBars();
@@ -183,7 +182,7 @@ public class DataProcessor {
     }
   }
 
-  private void processDayBar(String venue, String symbol) {
+  private void processDayBar(String venue, String symbol, LocalDateTime startTime) {
     try {
       InfluxdbReader.InfluxdbReaderBuilder builder = reader.prepareStatement(DAYBAR_LAST_UPDATE_QUERY);
       builder.set("exchange", venue);
@@ -199,8 +198,7 @@ public class DataProcessor {
       }
 
       PairSymbol pair = PairSymbol.parse(symbol, "/");
-      LocalDateTime startOfToday = LocalDate.now(UTC).atStartOfDay();
-      while (begin.isBefore(startOfToday.minusDays(365))) {
+      while (begin.isBefore(startTime.minusDays(365))) {
         CandleBar dayBars = service.getHistoDaysOfYear(venue, pair.getBase(), pair.getTerms(), begin.plusDays(365).toLocalDate());
         LocalDateTime lastUpdate = processDayBars(venue, symbol, dayBars);
         if (lastUpdate != null) {
@@ -210,9 +208,9 @@ public class DataProcessor {
         }
       }
 
-      long days = begin.until(startOfToday, ChronoUnit.DAYS);
+      long days = begin.until(startTime, ChronoUnit.DAYS);
       if (days > 0) {
-        CandleBar dayBars = service.getHistoDay(venue, pair.getBase(), pair.getTerms(), startOfToday.toLocalDate(), days);
+        CandleBar dayBars = service.getHistoDay(venue, pair.getBase(), pair.getTerms(), startTime.toLocalDate(), days);
         processDayBars(venue, symbol, dayBars);
       }
     } catch (Exception ex) {
