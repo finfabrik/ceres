@@ -20,7 +20,7 @@ import java.util.stream.StreamSupport;
 
 public class OrderBookHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookHandler.class);
-  private static final String ORDER_BOOK_URL = "https://www.binance.com/api/v1/depth?symbol=%s&limit=10";
+  private static final String ORDER_BOOK_URL = "https://www.binance.com/api/v1/depth?symbol=%s&limit=1000";
   private final PriceBasedOrderBook orderBook;
   private final TopOfBookProcessor processor;
   private final Gson gson;
@@ -68,6 +68,7 @@ public class OrderBookHandler {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                 jsonResponse = RestGetJson.request(url);
                 snapshot = gson.fromJson(jsonResponse, OrderBookEvent.class);
+                LOGGER.debug("{}", snapshot);
               } catch (InterruptedException e) {
                 if (Thread.currentThread().isInterrupted()) {
                   LOGGER.info("Retrieving snapshot interrupted, quitting...");
