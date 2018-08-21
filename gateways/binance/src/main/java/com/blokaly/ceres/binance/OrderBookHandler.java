@@ -9,7 +9,8 @@ import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.utils.EventQueueSpliterator;
 import com.google.gson.Gson;
-import com.google.inject.Provider;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class OrderBookHandler {
   private final ExecutorService executorService;
   private final EventQueueSpliterator<DiffBookEvent> splitter;
   private final AtomicBoolean started;
+  private final JsonParser parser;
 
   public OrderBookHandler(PriceBasedOrderBook orderBook,
                           TopOfBookProcessor processor,
@@ -41,6 +43,7 @@ public class OrderBookHandler {
     this.executorService = executorService;
     splitter = new EventQueueSpliterator<>();
     started = new AtomicBoolean(false);
+    this.parser = new JsonParser();
   }
 
   public String getSymbol() {
@@ -59,7 +62,8 @@ public class OrderBookHandler {
               orderBook.processIncrementalUpdate(event.getUpdate());
             }
           } else {
-            String url = String.format(ORDER_BOOK_URL, orderBook.getSymbol().toUpperCase());
+            String symbol = orderBook.getSymbol();
+            String url = String.format(ORDER_BOOK_URL, symbol.toUpperCase());
             String jsonResponse = RestGetJson.request(url);
             OrderBookEvent snapshot = gson.fromJson(jsonResponse, OrderBookEvent.class);
             LOGGER.debug("{}", snapshot);
@@ -76,7 +80,11 @@ public class OrderBookHandler {
                 }
               }
             }
-            store.save(PayloadType.JSON, jsonResponse);
+
+            JsonObject jsonObj = new JsonObject();
+            jsonObj.addProperty("stream", symbol + "@snapshot");
+            jsonObj.add("data", parser.parse(jsonResponse));
+            store.save(PayloadType.JSON, jsonObj.toString());
             orderBook.processSnapshot(snapshot);
           }
           processor.process(orderBook);
