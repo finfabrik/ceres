@@ -4,6 +4,7 @@ import com.blokaly.ceres.common.DecimalNumber;
 import com.blokaly.ceres.data.IdBasedOrderInfo;
 import com.blokaly.ceres.data.MarketDataSnapshot;
 import com.blokaly.ceres.data.OrderInfo;
+import com.blokaly.ceres.data.SymbolFormatter;
 import com.google.gson.*;
 
 import java.lang.reflect.Type;
@@ -15,14 +16,20 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
+  private final String symbol;
   private final long sequence;
   private final Collection<IdBasedOrderInfo> bids;
   private final Collection<IdBasedOrderInfo> asks;
 
-  private Snapshot(long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
+  private Snapshot(String symbol, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
+    this.symbol = symbol;
     this.sequence = sequence;
     this.bids = bids;
     this.asks = asks;
+  }
+
+  public String getSymbol() {
+    return symbol;
   }
 
   @Override
@@ -49,14 +56,15 @@ public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
       JsonArray data = jsonObject.has("data") ? jsonObject.get("data").getAsJsonArray() : null;
 
       if (data == null || data.size()==0) {
-        return new Snapshot(0, Collections.emptyList(), Collections.emptyList());
+        return new Snapshot("", 0, Collections.emptyList(), Collections.emptyList());
       }
 
       Map<Boolean, List<IdBasedOrderInfo>> bidAndAsk = StreamSupport.stream(data.spliterator(), false)
           .map(elm -> new SnapshotOrderInfo(elm.getAsJsonObject()))
           .collect(Collectors.partitioningBy(snapshotOrderInfo -> snapshotOrderInfo.side() == OrderInfo.Side.BUY));
 
-      return new Snapshot(System.currentTimeMillis(), bidAndAsk.get(true), bidAndAsk.get(false));
+      String symbol = data.get(0).getAsJsonObject().get("symbol").getAsString();
+      return new Snapshot(SymbolFormatter.normalise(symbol), System.nanoTime(), bidAndAsk.get(true), bidAndAsk.get(false));
     }
   }
 
@@ -66,7 +74,7 @@ public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
 
     private SnapshotOrderInfo(JsonObject json) {
       this.json = json;
-      this.side = OrderInfo.Side.BUY.name().equalsIgnoreCase(json.get("side").toString()) ? Side.BUY : Side.SELL;
+      this.side = OrderInfo.Side.BUY.name().equalsIgnoreCase(json.get("side").getAsString()) ? Side.BUY : Side.SELL;
     }
 
     @Override

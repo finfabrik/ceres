@@ -1,6 +1,9 @@
 package com.blokaly.ceres.bitmex;
 
 import com.blokaly.ceres.bitmex.event.*;
+import com.blokaly.ceres.common.DecimalNumber;
+import com.blokaly.ceres.common.Pair;
+import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -8,7 +11,9 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 @Singleton
 public class MessageHandlerImpl implements MessageHandler {
@@ -42,12 +47,33 @@ public class MessageHandlerImpl implements MessageHandler {
   }
 
   @Override
-  public void onMessage(Subscription event) {
-
+  public void onMessage(Subscription subscription) {
+    LOGGER.info("{} subscription {}", subscription.getSubscribe(), subscription.isSuccess() ? "success" : "failed");
   }
 
   @Override
-  public void onMessage(Snapshot event) {
+  public void onMessage(Snapshot snapshot) {
+    OrderBasedOrderBook book = orderBooks.get(snapshot.getSymbol());
+    if (book == null) {
+      return;
+    }
 
+    synchronized (book) {
+      book.processSnapshot(snapshot);
+      orderBooks.publishBook(book);
+    }
+  }
+
+  @Override
+  public void onMessage(Incremental incremental) {
+    OrderBasedOrderBook book = orderBooks.get(incremental.getSymbol());
+    if (book == null) {
+      return;
+    }
+
+    synchronized (book) {
+      book.processIncrementalUpdate(incremental);
+      orderBooks.publishDelta(book);
+    }
   }
 }

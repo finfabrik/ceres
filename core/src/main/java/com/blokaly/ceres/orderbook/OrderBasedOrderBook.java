@@ -9,10 +9,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
 
 public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBook {
   private static final Logger LOGGER = LoggerFactory.getLogger(OrderBasedOrderBook.class);
@@ -21,6 +18,7 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
   private final NavigableMap<DecimalNumber, PriceLevel> bids = Maps.newTreeMap(Comparator.<DecimalNumber>reverseOrder());
   private final NavigableMap<DecimalNumber, PriceLevel> asks = Maps.newTreeMap();
   private final Map<String, PriceLevel> levelByOrderId = Maps.newHashMap();
+  private final Map<DecimalNumber, DeltaLevel> delta = Maps.newHashMap();
   private long lastSequence;
 
   public OrderBasedOrderBook(String symbol, String key) {
@@ -47,6 +45,14 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
   @Override
   public Collection<? extends Level> getAsks() {
     return asks.values();
+  }
+
+  public Collection<? extends Level> getReverseBids() {
+    return bids.descendingMap().values();
+  }
+
+  public Collection<? extends Level> getReverseAsks() {
+    return asks.descendingMap().values();
   }
 
   @Override
@@ -80,6 +86,7 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
     }
 
     LOGGER.debug("processing market data: {}", incremental);
+    delta.clear();
     switch (incremental.type()) {
       case NEW:
         incremental.orderInfos().forEach(this::processNewOrder);
@@ -95,6 +102,10 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
     }
 
     lastSequence = sequence;
+  }
+
+  public Collection<DeltaLevel> getDelta() {
+    return delta.values();
   }
 
   @Override
@@ -157,7 +168,8 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
   }
 
   private void processNewOrder(IdBasedOrderInfo order) {
-    NavigableMap<DecimalNumber, PriceLevel> levels = sidedLevels(order.side());
+    OrderInfo.Side side = order.side();
+    NavigableMap<DecimalNumber, PriceLevel> levels = sidedLevels(side);
     DecimalNumber price = order.getPrice();
     String orderId = order.getId();
     PriceLevel level = levels.get(price);
@@ -167,6 +179,7 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
     }
     level.addOrChange(orderId, order.getQuantity());
     levelByOrderId.put(orderId, level);
+    delta.put(level.price, new DeltaLevel(level, side, MarketDataIncremental.Type.NEW));
   }
 
   private void processDoneOrder(IdBasedOrderInfo order) {
@@ -181,6 +194,7 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
       NavigableMap<DecimalNumber, PriceLevel> levels = sidedLevels(order.side());
       levels.remove(level.getPrice());
     }
+    delta.put(level.price, new DeltaLevel(level, order.side(), MarketDataIncremental.Type.DONE));
   }
 
   private void processUpdateOrder(IdBasedOrderInfo order) {
@@ -190,16 +204,15 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
       processNewOrder(order);
     } else {
       level.addOrChange(orderId, order.getQuantity());
+      delta.put(level.price, new DeltaLevel(level, order.side(), MarketDataIncremental.Type.UPDATE));
     }
 
   }
 
   public static final class PriceLevel implements OrderBook.Level {
-
     private final DecimalNumber price;
     private final Map<String, DecimalNumber> quantityByOrderId = Maps.newHashMap();
     private DecimalNumber total;
-
 
     private PriceLevel(DecimalNumber price) {
       this.price = price;
@@ -242,6 +255,36 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
           return false;
         }
       }
+    }
+  }
+
+  public static final class DeltaLevel implements OrderBook.Level {
+    private final PriceLevel level;
+    private final OrderInfo.Side side;
+    private final MarketDataIncremental.Type type;
+
+    private DeltaLevel(PriceLevel level, OrderInfo.Side side, MarketDataIncremental.Type type) {
+      this.level = level;
+      this.side = side;
+      this.type = type;
+    }
+
+    public OrderInfo.Side getSide() {
+      return side;
+    }
+
+    public MarketDataIncremental.Type getType() {
+      return type;
+    }
+
+    @Override
+    public DecimalNumber getPrice() {
+      return level.getPrice();
+    }
+
+    @Override
+    public DecimalNumber getQuantity() {
+      return level.getQuantity();
     }
   }
 }

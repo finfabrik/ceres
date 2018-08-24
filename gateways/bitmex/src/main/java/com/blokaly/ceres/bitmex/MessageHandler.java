@@ -1,13 +1,11 @@
 package com.blokaly.ceres.bitmex;
 
-import com.blokaly.ceres.bitmex.event.Close;
-import com.blokaly.ceres.bitmex.event.Open;
-import com.blokaly.ceres.bitmex.event.Snapshot;
-import com.blokaly.ceres.bitmex.event.Subscription;
+import com.blokaly.ceres.bitmex.event.*;
 
 public interface MessageHandler {
   void onMessage(Open open);
   void onMessage(Close close);
-  void onMessage(Subscription event);
-  void onMessage(Snapshot event);
+  void onMessage(Subscription subscription);
+  void onMessage(Snapshot snapshot);
+  void onMessage(Incremental incremental);
 }

@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':influxdb:influxdb-client')
+    compile 'com.lmax:disruptor:3.3.11'
+}
+

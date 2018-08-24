@@ -1,17 +1,19 @@
 package com.blokaly.ceres.bitmex;
 
 import com.blokaly.ceres.binding.AwaitExecutionService;
-import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
+import com.blokaly.ceres.bitmex.event.Incremental;
 import com.blokaly.ceres.bitmex.event.Snapshot;
 import com.blokaly.ceres.chronicle.ChronicleStoreModule;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
+import com.blokaly.ceres.influxdb.InfluxdbModule;
+import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
+import com.blokaly.ceres.influxdb.ringbuffer.InfluxdbBufferModule;
 import com.blokaly.ceres.network.WSConnectionListener;
 import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
-import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.system.Services;
 import com.google.gson.Gson;
@@ -22,6 +24,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.typesafe.config.Config;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
+import org.influxdb.InfluxDB;
 
 import java.net.URI;
 import java.util.List;
@@ -61,10 +64,15 @@ public class BitmexService {
 
       MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
       binder.addBinding(Snapshot.class).to(Snapshot.Adapter.class);
+      binder.addBinding(Incremental.class).to(Incremental.Adapter.class);
+
       bind(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
       bindExpose(BitmexClientProvider.class).asEagerSingleton();
       bind(WSConnectionListener.class).to(BitmexClientProvider.class);
       bindExpose(BitmexClient.class).toProvider(BitmexClientProvider.class);
+
+      install(new InfluxdbBufferModule());
+      bindExpose(BatchedPointsPublisher.class);
     }
 
     @Provides
