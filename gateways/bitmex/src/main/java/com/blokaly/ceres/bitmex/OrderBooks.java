@@ -42,7 +42,7 @@ public class OrderBooks {
 
   @PostConstruct
   public void start() {
-    ses.scheduleWithFixedDelay(this::process, 10, 20, TimeUnit.SECONDS);
+    ses.scheduleWithFixedDelay(this::process, 5, 5, TimeUnit.MINUTES);
   }
 
   public OrderBasedOrderBook get(String symbol) {
