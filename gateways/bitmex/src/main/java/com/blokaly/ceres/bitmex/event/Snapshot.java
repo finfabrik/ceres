@@ -16,16 +16,22 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
+  private final long recTime;
   private final String symbol;
   private final long sequence;
   private final Collection<IdBasedOrderInfo> bids;
   private final Collection<IdBasedOrderInfo> asks;
 
-  private Snapshot(String symbol, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
+  private Snapshot(long time, String symbol, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {
+    this.recTime = time;
     this.symbol = symbol;
     this.sequence = sequence;
     this.bids = bids;
     this.asks = asks;
+  }
+
+  public long getTime() {
+    return recTime;
   }
 
   public String getSymbol() {
@@ -56,7 +62,7 @@ public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
       JsonArray data = jsonObject.has("data") ? jsonObject.get("data").getAsJsonArray() : null;
 
       if (data == null || data.size()==0) {
-        return new Snapshot("", 0, Collections.emptyList(), Collections.emptyList());
+        return new Snapshot(0, "", 0, Collections.emptyList(), Collections.emptyList());
       }
 
       Map<Boolean, List<IdBasedOrderInfo>> bidAndAsk = StreamSupport.stream(data.spliterator(), false)
@@ -64,7 +70,7 @@ public class Snapshot implements MarketDataSnapshot<IdBasedOrderInfo> {
           .collect(Collectors.partitioningBy(snapshotOrderInfo -> snapshotOrderInfo.side() == OrderInfo.Side.BUY));
 
       String symbol = data.get(0).getAsJsonObject().get("symbol").getAsString();
-      return new Snapshot(SymbolFormatter.normalise(symbol), System.nanoTime(), bidAndAsk.get(true), bidAndAsk.get(false));
+      return new Snapshot(System.currentTimeMillis(), SymbolFormatter.normalise(symbol), System.nanoTime(), bidAndAsk.get(true), bidAndAsk.get(false));
     }
   }
 

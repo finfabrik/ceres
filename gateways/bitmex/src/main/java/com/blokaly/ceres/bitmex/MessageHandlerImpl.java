@@ -1,8 +1,6 @@
 package com.blokaly.ceres.bitmex;
 
 import com.blokaly.ceres.bitmex.event.*;
-import com.blokaly.ceres.common.DecimalNumber;
-import com.blokaly.ceres.common.Pair;
 import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -11,9 +9,7 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 @Singleton
 public class MessageHandlerImpl implements MessageHandler {
@@ -33,8 +29,8 @@ public class MessageHandlerImpl implements MessageHandler {
   @Override
   public void onMessage(Open open) {
     LOGGER.info("WS session open");
-    orderBooks.clearAllBooks();
-
+    orderBooks.getExecutorService().execute(orderBooks::clearAllBooks);
+    orderBooks.publishOpen();
     Collection<String> symbols = orderBooks.getAllSymbols();
     String jsonString = gson.toJson(new Subscribe(symbols));
     LOGGER.info("subscribing: {}", jsonString);
@@ -58,10 +54,10 @@ public class MessageHandlerImpl implements MessageHandler {
       return;
     }
 
-    synchronized (book) {
+    orderBooks.getExecutorService().execute(()->{
       book.processSnapshot(snapshot);
-      orderBooks.publishBook(book);
-    }
+      orderBooks.publishBook(snapshot.getTime(), book);
+    });
   }
 
   @Override
@@ -71,9 +67,9 @@ public class MessageHandlerImpl implements MessageHandler {
       return;
     }
 
-    synchronized (book) {
+    orderBooks.getExecutorService().execute(()->{
       book.processIncrementalUpdate(incremental);
-      orderBooks.publishDelta(book);
-    }
+      orderBooks.publishDelta(incremental.getTime(), book);
+    });
   }
 }

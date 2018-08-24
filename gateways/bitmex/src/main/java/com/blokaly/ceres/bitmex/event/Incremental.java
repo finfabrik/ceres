@@ -12,17 +12,23 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class Incremental implements MarketDataIncremental<IdBasedOrderInfo> {
+  private final long recTime;
   private final long sequence;
   private final String symbol;
   private final Type type;
   private final Collection<IdBasedOrderInfo> orderInfos;
 
-  public Incremental(long sequence, JsonObject data) {
+  public Incremental(long time, long sequence, JsonObject data) {
+    this.recTime = time;
     this.sequence = sequence;
     this.type = parseType(data);
     JsonArray orders = data.get("data").getAsJsonArray();
     this.symbol = SymbolFormatter.normalise(orders.get(0).getAsJsonObject().get("symbol").getAsString());
     this.orderInfos = StreamSupport.stream(orders.spliterator(), false).map(elm -> new MDIncrementalOrderInfo(elm.getAsJsonObject())).collect(Collectors.toList());
+  }
+
+  public long getTime() {
+    return recTime;
   }
 
   public String getSymbol() {
@@ -58,7 +64,7 @@ public class Incremental implements MarketDataIncremental<IdBasedOrderInfo> {
 
     @Override
     public Incremental deserialize(JsonElement jsonElement, java.lang.reflect.Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-      return new Incremental(System.nanoTime(), jsonElement.getAsJsonObject());
+      return new Incremental(System.currentTimeMillis(), System.nanoTime(), jsonElement.getAsJsonObject());
     }
   }
 
