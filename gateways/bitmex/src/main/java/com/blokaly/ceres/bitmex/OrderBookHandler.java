@@ -21,16 +21,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class OrderBooks {
-  private static final Logger LOGGER = LoggerFactory.getLogger(OrderBooks.class);
+public class OrderBookHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookHandler.class);
   private static final String MEASUREMENT = "OrderBook";
   private static final String NULL_STRING = "-";
+  private static final String SYMBOL_COL = "symbol";
+  private static final String SIDE_COL = "side";
+  private static final String ACTION_COL = "action";
+  private static final String INTRA_TS_COL = "intraTimestampTag";
+  private static final String PRICE_COL = "price";
+  private static final String SIZE_COL = "size";
   private final Map<String, OrderBasedOrderBook> orderbooks;
   private final BatchedPointsPublisher publisher;
   private final ScheduledExecutorService ses;
 
   @Inject
-  public OrderBooks(Map<String, OrderBasedOrderBook> orderbooks, BatchedPointsPublisher publisher, @SingleThread ScheduledExecutorService ses) {
+  public OrderBookHandler(Map<String, OrderBasedOrderBook> orderbooks, BatchedPointsPublisher publisher, @SingleThread ScheduledExecutorService ses) {
     this.orderbooks = orderbooks;
     this.publisher = publisher;
     this.ses = ses;
@@ -67,13 +73,7 @@ public class OrderBooks {
 
   public void publishOpen() {
     publisher.publish(builder -> {
-      builder.measurement(MEASUREMENT).time(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-      builder.tag("symbol", NULL_STRING);
-      builder.tag("side", NULL_STRING);
-      builder.tag("action", "S");
-      builder.tag("intraTimestampTag", "0");
-      builder.addField("price", 0D);
-      builder.addField("quantity", 0D);
+      buildPoint(System.currentTimeMillis(), NULL_STRING, NULL_STRING, "S", "0", 0D, 0D, builder);
     });
   }
 
@@ -93,13 +93,19 @@ public class OrderBooks {
         final AtomicInteger counter = new AtomicInteger(1);
         bids.forEach(level -> {
           publisher.publish(builder -> {
-            buildPoint(time, symbol, "B", "P", intraTimeFormat, counter, level, builder);
+            String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+            double price = level.getPrice().asDbl();
+            double size = level.getQuantity().asDbl();
+            buildPoint(time, symbol, "B", "P", intraTs, price, size, builder);
           });
         });
 
         asks.forEach(level -> {
           publisher.publish(builder -> {
-            buildPoint(time, symbol, "S", "P", intraTimeFormat, counter, level, builder);
+            String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+            double price = level.getPrice().asDbl();
+            double size = level.getQuantity().asDbl();
+            buildPoint(time, symbol, "S", "P", intraTs, price, size, builder);
           });
         });
       }
@@ -119,7 +125,10 @@ public class OrderBooks {
       delta.forEach(level -> {
         publisher.publish(builder -> {
           String side = level.getSide() == OrderInfo.Side.BUY ? "B" : "S";
-          buildPoint(time, symbol, side, getAction(level.getType()), intraTimeFormat, counter, level, builder);
+          String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+          double price = level.getPrice().asDbl();
+          double size = level.getQuantity().asDbl();
+          buildPoint(time, symbol, side, getAction(level.getType()), intraTs, price, size, builder);
         });
       });
 
@@ -128,14 +137,14 @@ public class OrderBooks {
     }
   }
 
-  private void buildPoint(long time, String symbol, String side, String action, String formatter, AtomicInteger counter, OrderBook.Level level, PointBuilderFactory.BatchedPointBuilder builder) {
+  private void buildPoint(long time, String symbol, String side, String action, String intraTs, double price, double size, PointBuilderFactory.BatchedPointBuilder builder) {
     builder.measurement(MEASUREMENT).time(time, TimeUnit.MILLISECONDS);
-    builder.tag("symbol", symbol);
-    builder.tag("side", side);
-    builder.tag("action", action);
-    builder.tag("intraTimestampTag", String.format(formatter, counter.getAndIncrement()));
-    builder.addField("price", level.getPrice().asDbl());
-    builder.addField("quantity", level.getQuantity().asDbl());
+    builder.tag(SYMBOL_COL, symbol.toUpperCase());
+    builder.tag(SIDE_COL, side);
+    builder.tag(ACTION_COL, action);
+    builder.tag(INTRA_TS_COL, intraTs);
+    builder.addField(PRICE_COL, price);
+    builder.addField(SIZE_COL, size);
   }
 
   private String getAction(MarketDataIncremental.Type type) {

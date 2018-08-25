@@ -31,20 +31,27 @@ public class JsonCracker {
   public void crack(String json) {
     LOGGER.debug("event: {}", json);
     JsonObject jsonObject = gson.fromJson(json, JsonElement.class).getAsJsonObject();
-    if (jsonObject.has("table")) {
-      String table = jsonObject.get("table").getAsString();
-      if ("orderBookL2".equalsIgnoreCase(table)) {
-        if ("partial".equalsIgnoreCase(jsonObject.get("action").getAsString())) {
-          Snapshot snapshot = gson.fromJson(json, Snapshot.class);
-          messageHandler.onMessage(snapshot);
-        } else {
-          Incremental incremental = gson.fromJson(json, Incremental.class);
-          messageHandler.onMessage(incremental);
+    try {
+      if (jsonObject.has("table")) {
+        String table = jsonObject.get("table").getAsString();
+        if ("orderBookL2".equalsIgnoreCase(table)) {
+          if ("partial".equalsIgnoreCase(jsonObject.get("action").getAsString())) {
+            Snapshot snapshot = gson.fromJson(json, Snapshot.class);
+            messageHandler.onMessage(snapshot);
+          } else {
+            Incremental incremental = gson.fromJson(json, Incremental.class);
+            messageHandler.onMessage(incremental);
+          }
+        } else if ("trade".equalsIgnoreCase(table)) {
+          Trades trades = gson.fromJson(json, Trades.class);
+          messageHandler.onMessage(trades);
         }
+      } else if (jsonObject.has("subscribe")) {
+        Subscription subscription = gson.fromJson(jsonObject, Subscription.class);
+        messageHandler.onMessage(subscription);
       }
-    } else if (jsonObject.has("subscribe")) {
-      Subscription subscription = gson.fromJson(jsonObject, Subscription.class);
-      messageHandler.onMessage(subscription);
+    } catch (Exception ex) {
+      LOGGER.error("Error cracking event: " + json, ex);
     }
   }
 }

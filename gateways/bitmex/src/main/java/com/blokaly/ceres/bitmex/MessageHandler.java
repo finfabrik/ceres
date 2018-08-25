@@ -8,4 +8,5 @@ public interface MessageHandler {
   void onMessage(Subscription subscription);
   void onMessage(Snapshot snapshot);
   void onMessage(Incremental incremental);
+  void onMessage(Trades trades);
 }

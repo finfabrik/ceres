@@ -17,21 +17,23 @@ public class MessageHandlerImpl implements MessageHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandlerImpl.class);
   private final Gson gson;
   private final Provider<BitmexClient> clientProvider;
-  private final OrderBooks orderBooks;
+  private final OrderBookHandler orderBookHandler;
+  private final TradesHandler tradesHandler;
 
   @Inject
-  public MessageHandlerImpl(Gson gson, Provider<BitmexClient> clientProvider, OrderBooks orderBooks) {
+  public MessageHandlerImpl(Gson gson, Provider<BitmexClient> clientProvider, OrderBookHandler orderBookHandler, TradesHandler tradesHandler) {
     this.gson = gson;
     this.clientProvider = clientProvider;
-    this.orderBooks = orderBooks;
+    this.orderBookHandler = orderBookHandler;
+    this.tradesHandler = tradesHandler;
   }
 
   @Override
   public void onMessage(Open open) {
     LOGGER.info("WS session open");
-    orderBooks.getExecutorService().execute(orderBooks::clearAllBooks);
-    orderBooks.publishOpen();
-    Collection<String> symbols = orderBooks.getAllSymbols();
+    orderBookHandler.getExecutorService().execute(orderBookHandler::clearAllBooks);
+    orderBookHandler.publishOpen();
+    Collection<String> symbols = orderBookHandler.getAllSymbols();
     String jsonString = gson.toJson(new Subscribe(symbols));
     LOGGER.info("subscribing: {}", jsonString);
     clientProvider.get().send(jsonString);
@@ -49,27 +51,33 @@ public class MessageHandlerImpl implements MessageHandler {
 
   @Override
   public void onMessage(Snapshot snapshot) {
-    OrderBasedOrderBook book = orderBooks.get(snapshot.getSymbol());
+    OrderBasedOrderBook book = orderBookHandler.get(snapshot.getSymbol());
     if (book == null) {
       return;
     }
 
-    orderBooks.getExecutorService().execute(()->{
+    orderBookHandler.getExecutorService().execute(()->{
       book.processSnapshot(snapshot);
-      orderBooks.publishBook(snapshot.getTime(), book);
+      orderBookHandler.publishBook(snapshot.getTime(), book);
     });
   }
 
   @Override
   public void onMessage(Incremental incremental) {
-    OrderBasedOrderBook book = orderBooks.get(incremental.getSymbol());
+    OrderBasedOrderBook book = orderBookHandler.get(incremental.getSymbol());
     if (book == null) {
       return;
     }
 
-    orderBooks.getExecutorService().execute(()->{
+    orderBookHandler.getExecutorService().execute(()->{
       book.processIncrementalUpdate(incremental);
-      orderBooks.publishDelta(incremental.getTime(), book);
+      orderBookHandler.publishDelta(incremental.getTime(), book);
     });
+  }
+
+  @Override
+  public void onMessage(Trades trades) {
+    Collection<Trades.Trade> tradeBag = trades.getTrades();
+    tradesHandler.publishTrades(tradeBag);
   }
 }
