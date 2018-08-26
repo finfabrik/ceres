@@ -1,6 +1,8 @@
 package com.blokaly.ceres.bitmex;
 
 import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.bitmex.event.Incremental;
+import com.blokaly.ceres.bitmex.event.Snapshot;
 import com.blokaly.ceres.data.MarketDataIncremental;
 import com.blokaly.ceres.data.OrderInfo;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
@@ -42,79 +44,100 @@ public class OrderBookHandler {
     this.ses = ses;
   }
 
-  public ExecutorService getExecutorService() {
-    return ses;
-  }
-
   @PostConstruct
   public void start() {
-    ses.scheduleWithFixedDelay(this::process, 5, 5, TimeUnit.MINUTES);
-  }
-
-  public OrderBasedOrderBook get(String symbol) {
-    return orderbooks.get(symbol);
+    ses.scheduleWithFixedDelay(this::processOrderBooks, 5, 5, TimeUnit.MINUTES);
   }
 
   public Collection<String> getAllSymbols() {
     return orderbooks.keySet();
   }
 
-  public Collection<OrderBasedOrderBook> getAllBooks() {
-    return orderbooks.values();
-  }
-
   public void clearAllBooks() {
-    orderbooks.values().forEach(OrderBasedOrderBook::clear);
+    ses.execute(()->{
+      orderbooks.values().forEach(OrderBasedOrderBook::clear);
+    });
+
   }
 
-  private void process() {
+  private void processOrderBooks() {
     orderbooks.values().forEach(this::publishBook);
   }
 
   public void publishOpen() {
-    publisher.publish(builder -> {
-      buildPoint(System.currentTimeMillis(), NULL_STRING, NULL_STRING, "S", "0", 0D, 0D, builder);
+    getAllSymbols().forEach(symbol -> {
+      publisher.publish(builder -> {
+        buildPoint(System.currentTimeMillis(), symbol, NULL_STRING, "S", "0", 0D, 0D, builder);
+      });
     });
   }
 
-  public void publishBook(OrderBasedOrderBook book) {
+  public void processSnapshot(Snapshot snapshot) {
+
+    OrderBasedOrderBook book = orderbooks.get(snapshot.getSymbol());
+    if (book == null) {
+      return;
+    }
+
+    ses.execute(()->{
+      book.processSnapshot(snapshot);
+      publishBook(snapshot.getTime(), book);
+    });
+  }
+
+  public void processIncremental(Incremental incremental) {
+    OrderBasedOrderBook book = orderbooks.get(incremental.getSymbol());
+    if (book == null) {
+      return;
+    }
+
+    ses.execute(()->{
+      book.processIncrementalUpdate(incremental);
+      publishDelta(incremental.getTime(), book);
+    });
+  }
+
+  private void publishBook(OrderBasedOrderBook book) {
     publishBook(System.currentTimeMillis(), book);
   }
 
-  public void publishBook(long time, OrderBasedOrderBook book) {
+  private void publishBook(long time, OrderBasedOrderBook book) {
+    if (book.getLastSequence() <= 0) {
+      return;
+    }
+
     String symbol = book.getSymbol();
     try {
-      if (book.getLastSequence() > 0) {
-        Collection<? extends OrderBook.Level> bids = book.getBids();
-        Collection<? extends OrderBook.Level> asks = book.getReverseAsks();
-        int total = bids.size() + asks.size();
-        int length = (int) (Math.log10(total) + 1);
-        String intraTimeFormat = "%0" + length + "d";
-        final AtomicInteger counter = new AtomicInteger(1);
-        bids.forEach(level -> {
-          publisher.publish(builder -> {
-            String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
-            double price = level.getPrice().asDbl();
-            double size = level.getQuantity().asDbl();
-            buildPoint(time, symbol, "B", "P", intraTs, price, size, builder);
-          });
+      Collection<? extends OrderBook.Level> bids = book.getBids();
+      Collection<? extends OrderBook.Level> asks = book.getReverseAsks();
+      int total = bids.size() + asks.size();
+      int length = (int) (Math.log10(total) + 1);
+      String intraTimeFormat = "%0" + length + "d";
+      final AtomicInteger counter = new AtomicInteger(1);
+      bids.forEach(level -> {
+        publisher.publish(builder -> {
+          String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+          double price = level.getPrice().asDbl();
+          double size = level.getQuantity().asDbl();
+          buildPoint(time, symbol, "B", "P", intraTs, price, size, builder);
         });
+      });
 
-        asks.forEach(level -> {
-          publisher.publish(builder -> {
-            String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
-            double price = level.getPrice().asDbl();
-            double size = level.getQuantity().asDbl();
-            buildPoint(time, symbol, "S", "P", intraTs, price, size, builder);
-          });
+      asks.forEach(level -> {
+        publisher.publish(builder -> {
+          String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+          double price = level.getPrice().asDbl();
+          double size = level.getQuantity().asDbl();
+          buildPoint(time, symbol, "S", "P", intraTs, price, size, builder);
         });
-      }
+      });
+
     } catch (Exception ex) {
       LOGGER.error("Failed to process orderbook for " + symbol, ex);
     }
   }
 
-  public void publishDelta(long time, OrderBasedOrderBook book) {
+  private void publishDelta(long time, OrderBasedOrderBook book) {
     String symbol = book.getSymbol();
     try {
 

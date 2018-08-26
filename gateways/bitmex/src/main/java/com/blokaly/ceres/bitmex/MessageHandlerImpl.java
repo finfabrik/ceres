@@ -31,7 +31,7 @@ public class MessageHandlerImpl implements MessageHandler {
   @Override
   public void onMessage(Open open) {
     LOGGER.info("WS session open");
-    orderBookHandler.getExecutorService().execute(orderBookHandler::clearAllBooks);
+    orderBookHandler.clearAllBooks();
     orderBookHandler.publishOpen();
     Collection<String> symbols = orderBookHandler.getAllSymbols();
     String jsonString = gson.toJson(new Subscribe(symbols));
@@ -51,28 +51,12 @@ public class MessageHandlerImpl implements MessageHandler {
 
   @Override
   public void onMessage(Snapshot snapshot) {
-    OrderBasedOrderBook book = orderBookHandler.get(snapshot.getSymbol());
-    if (book == null) {
-      return;
-    }
-
-    orderBookHandler.getExecutorService().execute(()->{
-      book.processSnapshot(snapshot);
-      orderBookHandler.publishBook(snapshot.getTime(), book);
-    });
+    orderBookHandler.processSnapshot(snapshot);
   }
 
   @Override
   public void onMessage(Incremental incremental) {
-    OrderBasedOrderBook book = orderBookHandler.get(incremental.getSymbol());
-    if (book == null) {
-      return;
-    }
-
-    orderBookHandler.getExecutorService().execute(()->{
-      book.processIncrementalUpdate(incremental);
-      orderBookHandler.publishDelta(incremental.getTime(), book);
-    });
+    orderBookHandler.processIncremental(incremental);
   }
 
   @Override
