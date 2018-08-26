@@ -12,12 +12,13 @@ import java.util.stream.StreamSupport;
 
 public class DiffBookEvent {
 
+  private final long evtTime;
   private final long begin;
   private final long end;
   private final MarketDataIncremental<OrderInfo> update;
   private final MarketDataIncremental<OrderInfo> deletion;
 
-  public static DiffBookEvent parse(long begin, long end, JsonArray bidArray, JsonArray askArray) {
+  public static DiffBookEvent parse(long evtTime, long begin, long end, JsonArray bidArray, JsonArray askArray) {
 
     Map<Boolean, List<OrderInfo>> bids = StreamSupport.stream(bidArray.spliterator(), false)
         .map(elm -> new JsonArrayOrderInfo(OrderInfo.Side.BUY, elm.getAsJsonArray()))
@@ -35,14 +36,19 @@ public class DiffBookEvent {
     deletion.add(bids.get(true));
     deletion.add(asks.get(true));
 
-    return new DiffBookEvent(begin, end, update, deletion);
+    return new DiffBookEvent(evtTime, begin, end, update, deletion);
   }
 
-  public DiffBookEvent(long begin, long end, MarketDataIncremental<OrderInfo> update, MarketDataIncremental<OrderInfo> deletion) {
+  public DiffBookEvent(long time, long begin, long end, MarketDataIncremental<OrderInfo> update, MarketDataIncremental<OrderInfo> deletion) {
+    this.evtTime = time;
     this.begin = begin;
     this.end = end;
     this.update = update;
     this.deletion = deletion;
+  }
+
+  public long getEventTime() {
+    return evtTime;
   }
 
   public long getBeginSequence() {
@@ -67,11 +73,12 @@ public class DiffBookEvent {
     public DiffBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
       JsonObject jsonObject = json.getAsJsonObject();
+      long evtTime = jsonObject.get("E").getAsLong();
       long begin = jsonObject.get("U").getAsLong();
       long end = jsonObject.get("u").getAsLong();
       JsonArray bids = jsonObject.get("b").getAsJsonArray();
       JsonArray asks = jsonObject.get("a").getAsJsonArray();
-      return DiffBookEvent.parse(begin, end, bids, asks);
+      return DiffBookEvent.parse(evtTime, begin, end, bids, asks);
     }
   }
 }

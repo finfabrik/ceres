@@ -9,6 +9,8 @@ import com.blokaly.ceres.chronicle.ChronicleStoreModule;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Configs;
+import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
+import com.blokaly.ceres.influxdb.ringbuffer.InfluxdbBufferModule;
 import com.blokaly.ceres.kafka.HBProducer;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
@@ -133,6 +135,9 @@ public class BinanceService {
       binder.addBinding(DiffBookEvent.class).to(DiffBookEvent.Adapter.class);
       bindExpose(BinanceClientProvider.class);
       bind(new TypeLiteral<Collection<BinanceClient>>(){}).toProvider(BinanceClientProvider.class).asEagerSingleton();
+
+      install(new InfluxdbBufferModule());
+      bindExpose(BatchedPointsPublisher.class);
     }
 
     @Exposed

@@ -5,6 +5,7 @@ import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.chronicle.WriteStoreProvider;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
+import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.security.PublicKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private final Gson gson;
   private final TopOfBookProcessor processor;
   private final WriteStoreProvider storeProvider;
+  private final BatchedPointsPublisher publisher;
   private final Provider<ExecutorService> esProvider;
   private final Map<String, BinanceClient> clients;
   private final List<String> symbols;
@@ -42,6 +45,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
                                Gson gson,
                                TopOfBookProcessor processor,
                                WriteStoreProvider storeProvider,
+                               BatchedPointsPublisher publisher,
                                @SingleThread Provider<ExecutorService> esProvider,
                                @SingleThread ScheduledExecutorService executorService
                                ) {
@@ -52,6 +56,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     this.gson = gson;
     this.processor = processor;
     this.storeProvider = storeProvider;
+    this.publisher = publisher;
     this.esProvider = esProvider;
     clients = Maps.newHashMap();
   }
@@ -61,7 +66,8 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
       try {
         String symbol = SymbolFormatter.normalise(sym);
         URI uri = new URI(wsUrl + getStreams(sym));
-        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source), processor, gson, storeProvider.get(), esProvider.get());
+        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source),
+            processor, gson, storeProvider.get(), publisher, esProvider.get());
         BinanceClient client = new BinanceClient(uri, handler, storeProvider.get(), gson, this);
         clients.put(symbol, client);
       } catch (Exception ex) {
