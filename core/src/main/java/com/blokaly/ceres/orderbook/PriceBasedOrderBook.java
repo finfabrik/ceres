@@ -22,11 +22,13 @@ public class PriceBasedOrderBook implements OrderBook<OrderInfo>, TopOfBook {
   private final NavigableMap<DecimalNumber, PriceLevel> asks = Maps.newTreeMap();
   private final Map<DecimalNumber, DeltaLevel> delta = Maps.newHashMap();
   private long lastSequence;
+  private long lastUpdTime;
 
   public PriceBasedOrderBook(String symbol, String key) {
     this.symbol = symbol;
     this.key = key;
     this.lastSequence = 0;
+    this.lastUpdTime = 0;
   }
 
   @Override
@@ -129,6 +131,14 @@ public class PriceBasedOrderBook implements OrderBook<OrderInfo>, TopOfBook {
     }
 
     lastSequence = sequence;
+  }
+
+  public long getLastUpdateTime() {
+    return lastUpdTime;
+  }
+
+  public void setLastUpdateTime(long time) {
+    this.lastUpdTime = time;
   }
 
   public Collection<PriceBasedOrderBook.DeltaLevel> getDelta() {

@@ -89,15 +89,17 @@ public class OrderBookHandler {
         StreamSupport.stream(splitter, false).forEach(event -> {
 
           if (event == DiffBookEvent.EMPTY) {
-            publishBook(System.currentTimeMillis());
+            publishBook(orderBook.getLastUpdateTime());
             return;
           }
 
+          long eventTime = event.getEventTime();
           if (orderBook.isInitialized()) {
             if (event.getBeginSequence() <= orderBook.getLastSequence() + 1) {
               orderBook.processIncrementalUpdate(event.getDeletion());
               orderBook.processIncrementalUpdate(event.getUpdate());
-              publishDelta(event.getEventTime());
+              orderBook.setLastUpdateTime(eventTime);
+              publishDelta(eventTime);
             }
           } else {
             String symbol = orderBook.getSymbol();
@@ -124,7 +126,7 @@ public class OrderBookHandler {
             jsonObj.add("data", parser.parse(jsonResponse));
             store.save(PayloadType.JSON, jsonObj.toString());
             orderBook.processSnapshot(snapshot);
-            publishBook(event.getEventTime());
+            publishBook(eventTime);
           }
           processor.process(orderBook);
         });

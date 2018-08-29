@@ -35,7 +35,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private final WriteStoreProvider storeProvider;
   private final BatchedPointsPublisher publisher;
   private final ScheduledExecutorService ese;
-  private final ExecutorService es;
+  private final Provider<ExecutorService> esProvider;
   private final Map<String, BinanceClient> clients;
   private final List<String> symbols;
   private final String source;
@@ -47,7 +47,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
                                WriteStoreProvider storeProvider,
                                BatchedPointsPublisher publisher,
                                @SingleThread ScheduledExecutorService scheduledExecutorService,
-                               @SingleThread ExecutorService executorService
+                               @SingleThread Provider<ExecutorService> esProvider
                                ) {
     super(scheduledExecutorService);
     wsUrl = config.getString(CommonConfigs.WS_URL);
@@ -58,7 +58,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     this.storeProvider = storeProvider;
     this.publisher = publisher;
     this.ese = scheduledExecutorService;
-    this.es = executorService;
+    this.esProvider = esProvider;
     clients = Maps.newHashMap();
   }
 
@@ -69,7 +69,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
         String code = pair.getCode();
         URI uri = new URI(wsUrl + getStreams(code));
         OrderBookHandler orderBookHandler = new OrderBookHandler(pair, new PriceBasedOrderBook(code, code + "." + source),
-            processor, gson, storeProvider.get(), publisher, ese, es);
+            processor, gson, storeProvider.get(), publisher, ese, esProvider.get());
         TradesHandler tradesHandler = new TradesHandler(pair, publisher);
         BinanceClient client = new BinanceClient(pair, uri, orderBookHandler, tradesHandler, storeProvider.get(), gson, this);
         clients.put(code, client);
