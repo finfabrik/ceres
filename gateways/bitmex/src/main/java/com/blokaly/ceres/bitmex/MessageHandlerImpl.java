@@ -33,6 +33,7 @@ public class MessageHandlerImpl implements MessageHandler {
     LOGGER.info("WS session open");
     orderBookHandler.clearAllBooks();
     orderBookHandler.publishOpen();
+    tradesHandler.publieOpen();
     Collection<String> symbols = orderBookHandler.getAllSymbols();
     String jsonString = gson.toJson(new Subscribe(symbols));
     LOGGER.info("subscribing: {}", jsonString);

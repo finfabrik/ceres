@@ -107,6 +107,8 @@ public class OrderBookHandler {
     }
 
     String symbol = book.getSymbol();
+    LOGGER.info("Storing orderbook snapshot for {}", symbol);
+
     try {
       Collection<? extends OrderBook.Level> bids = book.getBids();
       Collection<? extends OrderBook.Level> asks = book.getReverseAsks();
