@@ -78,6 +78,8 @@ public class OrderBookHandler {
   }
 
   public void init() {
+
+    publishOpen();
     es.execute(orderBook::clear);
 
     if (started.compareAndSet(false, true)) {
@@ -128,8 +130,6 @@ public class OrderBookHandler {
         });
       });
     }
-
-    publishOpen();
   }
 
   public void reset() {
