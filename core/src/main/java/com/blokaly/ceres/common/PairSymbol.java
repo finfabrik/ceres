@@ -8,6 +8,11 @@ import javax.annotation.Nonnull;
 public class PairSymbol {
   private final String base;
   private final String terms;
+  private final String code;
+
+  public static PairSymbol parse(String pair) {
+    return parse(pair, "/");
+  }
 
   public static PairSymbol parse(String pair, String delimiter) {
     String[] syms = pair.split(delimiter);
@@ -17,6 +22,7 @@ public class PairSymbol {
   public PairSymbol(@Nonnull String base, @Nonnull String terms) {
     this.base = base;
     this.terms = terms;
+    this.code = base + terms;
   }
 
   public PairSymbol invert() {
@@ -32,7 +38,7 @@ public class PairSymbol {
   }
 
   public String getCode() {
-    return base + terms;
+    return code;
   }
 
   public String toString(String delimiter) {

@@ -3,8 +3,8 @@ package com.blokaly.ceres.binance;
 import com.blokaly.ceres.binance.event.StreamEvent;
 import com.blokaly.ceres.binding.SingleThread;
 import com.blokaly.ceres.chronicle.WriteStoreProvider;
+import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.common.Source;
-import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.security.PublicKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,8 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private final TopOfBookProcessor processor;
   private final WriteStoreProvider storeProvider;
   private final BatchedPointsPublisher publisher;
-  private final Provider<ExecutorService> esProvider;
+  private final ScheduledExecutorService ese;
+  private final ExecutorService es;
   private final Map<String, BinanceClient> clients;
   private final List<String> symbols;
   private final String source;
@@ -46,10 +46,10 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
                                TopOfBookProcessor processor,
                                WriteStoreProvider storeProvider,
                                BatchedPointsPublisher publisher,
-                               @SingleThread Provider<ExecutorService> esProvider,
-                               @SingleThread ScheduledExecutorService executorService
+                               @SingleThread ScheduledExecutorService scheduledExecutorService,
+                               @SingleThread ExecutorService executorService
                                ) {
-    super(executorService);
+    super(scheduledExecutorService);
     wsUrl = config.getString(CommonConfigs.WS_URL);
     source = Source.valueOf(config.getString(CommonConfigs.APP_SOURCE).toUpperCase()).getCode();
     symbols = config.getStringList("symbols");
@@ -57,19 +57,22 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     this.processor = processor;
     this.storeProvider = storeProvider;
     this.publisher = publisher;
-    this.esProvider = esProvider;
+    this.ese = scheduledExecutorService;
+    this.es = executorService;
     clients = Maps.newHashMap();
   }
 
   private void init() {
     symbols.forEach(sym -> {
       try {
-        String symbol = SymbolFormatter.normalise(sym);
-        URI uri = new URI(wsUrl + getStreams(sym));
-        OrderBookHandler handler = new OrderBookHandler(new PriceBasedOrderBook(symbol, symbol + "." + source),
-            processor, gson, storeProvider.get(), publisher, esProvider.get());
-        BinanceClient client = new BinanceClient(uri, handler, storeProvider.get(), gson, this);
-        clients.put(symbol, client);
+        PairSymbol pair = PairSymbol.parse(sym);
+        String code = pair.getCode();
+        URI uri = new URI(wsUrl + getStreams(code));
+        OrderBookHandler orderBookHandler = new OrderBookHandler(pair, new PriceBasedOrderBook(code, code + "." + source),
+            processor, gson, storeProvider.get(), publisher, ese, es);
+        TradesHandler tradesHandler = new TradesHandler(pair, publisher);
+        BinanceClient client = new BinanceClient(pair, uri, orderBookHandler, tradesHandler, storeProvider.get(), gson, this);
+        clients.put(code, client);
       } catch (Exception ex) {
         LOGGER.error("Error creating websocket for symbol: " + sym, ex);
       }
@@ -77,7 +80,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   }
 
   private String getStreams(String symbol) {
-    return symbol + StreamEvent.DEPTH_STREAM + "/" + symbol + StreamEvent.TRADE_STREAM;
+    return symbol + StreamEvent.STREAM_DELIMITER + StreamEvent.DEPTH_STREAM + "/" + symbol + StreamEvent.STREAM_DELIMITER + StreamEvent.TRADE_STREAM;
   }
 
   @Override

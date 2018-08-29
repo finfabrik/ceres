@@ -17,6 +17,7 @@ public class DiffBookEvent {
   private final long end;
   private final MarketDataIncremental<OrderInfo> update;
   private final MarketDataIncremental<OrderInfo> deletion;
+  public static final DiffBookEvent EMPTY = new DiffBookEvent(0, 0, 0, null, null);
 
   public static DiffBookEvent parse(long evtTime, long begin, long end, JsonArray bidArray, JsonArray askArray) {
 

@@ -2,6 +2,7 @@ package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.OrderBookEvent;
+import com.blokaly.ceres.binance.event.TradeEvent;
 import com.blokaly.ceres.binding.AwaitExecutionService;
 import com.blokaly.ceres.binding.BootstrapService;
 import com.blokaly.ceres.binding.CeresModule;
@@ -133,6 +134,7 @@ public class BinanceService {
       MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
       binder.addBinding(OrderBookEvent.class).to(OrderBookEvent.Adapter.class);
       binder.addBinding(DiffBookEvent.class).to(DiffBookEvent.Adapter.class);
+      binder.addBinding(TradeEvent.class).to(TradeEvent.Adapter.class);
       bindExpose(BinanceClientProvider.class);
       bind(new TypeLiteral<Collection<BinanceClient>>(){}).toProvider(BinanceClientProvider.class).asEagerSingleton();
 

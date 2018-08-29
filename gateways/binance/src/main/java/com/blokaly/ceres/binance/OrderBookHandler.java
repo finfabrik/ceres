@@ -4,12 +4,12 @@ import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.OrderBookEvent;
 import com.blokaly.ceres.chronicle.PayloadType;
 import com.blokaly.ceres.chronicle.WriteStore;
+import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.data.MarketDataIncremental;
 import com.blokaly.ceres.data.OrderInfo;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.influxdb.ringbuffer.PointBuilderFactory;
 import com.blokaly.ceres.network.RestGetJson;
-import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
 import com.blokaly.ceres.orderbook.OrderBook;
 import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,28 +40,34 @@ public class OrderBookHandler {
   private static final String INTRA_TS_COL = "intraTimestampTag";
   private static final String PRICE_COL = "price";
   private static final String SIZE_COL = "size";
+  private final PairSymbol pair;
   private final PriceBasedOrderBook orderBook;
   private final TopOfBookProcessor processor;
   private final Gson gson;
   private final WriteStore store;
   private final BatchedPointsPublisher publisher;
-  private final ExecutorService executorService;
+  private final ScheduledExecutorService ses;
+  private final ExecutorService es;
   private final EventQueueSpliterator<DiffBookEvent> splitter;
   private final AtomicBoolean started;
   private final JsonParser parser;
 
-  public OrderBookHandler(PriceBasedOrderBook orderBook,
+  public OrderBookHandler(PairSymbol pair,
+                          PriceBasedOrderBook orderBook,
                           TopOfBookProcessor processor,
                           Gson gson,
                           WriteStore store,
                           BatchedPointsPublisher publisher,
+                          ScheduledExecutorService scheduledExecutorService,
                           ExecutorService executorService) {
+    this.pair = pair;
     this.orderBook = orderBook;
     this.processor = processor;
     this.gson = gson;
     this.store = store;
     this.publisher = publisher;
-    this.executorService = executorService;
+    this.ses = scheduledExecutorService;
+    this.es = executorService;
     splitter = new EventQueueSpliterator<>();
     started = new AtomicBoolean(false);
     this.parser = new JsonParser();
@@ -71,16 +78,24 @@ public class OrderBookHandler {
   }
 
   public void init() {
-    executorService.execute(orderBook::clear);
+    es.execute(orderBook::clear);
 
     if (started.compareAndSet(false, true)) {
-      executorService.execute(() -> {
+      ses.scheduleWithFixedDelay(()->handle(DiffBookEvent.EMPTY), 5, 5, TimeUnit.MINUTES);
+
+      es.execute(() -> {
         StreamSupport.stream(splitter, false).forEach(event -> {
+
+          if (event == DiffBookEvent.EMPTY) {
+            publishBook(System.currentTimeMillis());
+            return;
+          }
+
           if (orderBook.isInitialized()) {
             if (event.getBeginSequence() <= orderBook.getLastSequence() + 1) {
               orderBook.processIncrementalUpdate(event.getDeletion());
               orderBook.processIncrementalUpdate(event.getUpdate());
-              publishDelta(event.getEventTime(), orderBook);
+              publishDelta(event.getEventTime());
             }
           } else {
             String symbol = orderBook.getSymbol();
@@ -107,7 +122,7 @@ public class OrderBookHandler {
             jsonObj.add("data", parser.parse(jsonResponse));
             store.save(PayloadType.JSON, jsonObj.toString());
             orderBook.processSnapshot(snapshot);
-            publishBook(event.getEventTime(), orderBook);
+            publishBook(event.getEventTime());
           }
           processor.process(orderBook);
         });
@@ -118,7 +133,7 @@ public class OrderBookHandler {
   }
 
   public void reset() {
-    executorService.execute(()->{
+    es.execute(()->{
       orderBook.clear();
       processor.process(orderBook);
     });
@@ -130,19 +145,21 @@ public class OrderBookHandler {
 
   public void publishOpen() {
     publisher.publish(builder -> {
-      buildPoint(System.currentTimeMillis(), orderBook.getSymbol(), NULL_STRING, "S", "0", 0D, 0D, builder);
+      buildPoint(System.currentTimeMillis(), pair.toString("/"), NULL_STRING, "S", "0", 0D, 0D, builder);
     });
   }
 
-  private void publishBook(long time, PriceBasedOrderBook book) {
-    if (book.getLastSequence() <= 0) {
+  private void publishBook(long time) {
+    if (orderBook.getLastSequence() <= 0) {
       return;
     }
 
-    String symbol = book.getSymbol();
+    String symbol = pair.toString("/");
+    LOGGER.info("Storing orderbook snapshot for {}", symbol);
+
     try {
-      Collection<? extends OrderBook.Level> bids = book.getBids();
-      Collection<? extends OrderBook.Level> asks = book.getReverseAsks();
+      Collection<? extends OrderBook.Level> bids = orderBook.getBids();
+      Collection<? extends OrderBook.Level> asks = orderBook.getReverseAsks();
       int total = bids.size() + asks.size();
       int length = (int) (Math.log10(total) + 1);
       String intraTimeFormat = "%0" + length + "d";
@@ -170,10 +187,10 @@ public class OrderBookHandler {
     }
   }
 
-  private void publishDelta(long time, PriceBasedOrderBook book) {
-    String symbol = book.getSymbol();
+  private void publishDelta(long time) {
+    String symbol = pair.toString("/");
     try {
-      Collection<PriceBasedOrderBook.DeltaLevel> delta = book.getDelta();
+      Collection<PriceBasedOrderBook.DeltaLevel> delta = orderBook.getDelta();
       int length = (int) (Math.log10(delta.size()) + 1);
       String intraTimeFormat = "%0" + length + "d";
       final AtomicInteger counter = new AtomicInteger(1);
