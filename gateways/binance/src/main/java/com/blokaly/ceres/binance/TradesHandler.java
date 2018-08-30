@@ -27,7 +27,7 @@ public class TradesHandler {
   public void publishTrades(TradeEvent trade) {
     if (pair.getCode().equalsIgnoreCase(trade.getSymbol())) {
       publisher.publish(builder -> {
-        String symbol = pair.toString("/");
+        String symbol = pair.toPairString();
         buildPoint(trade.getTime(), symbol, trade.getPrice().asDbl(), trade.getQuantity().asDbl(), trade.getTradeTime(), trade.isBuyerMarketMaker(), builder);
       });
     }
@@ -35,7 +35,7 @@ public class TradesHandler {
 
   public void publishOpen() {
     publisher.publish(builder -> {
-      buildPoint(System.currentTimeMillis(), pair.toString("/"), 0D, 0D, 0L, false, builder);
+      buildPoint(System.currentTimeMillis(), pair.toPairString(), 0D, 0D, 0L, false, builder);
     });
   }
 

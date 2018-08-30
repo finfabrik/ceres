@@ -6,12 +6,14 @@ import com.google.common.base.Objects;
 import javax.annotation.Nonnull;
 
 public class PairSymbol {
+  private static final String DELIMIT = "/";
   private final String base;
   private final String terms;
   private final String code;
+  private final String pair;
 
   public static PairSymbol parse(String pair) {
-    return parse(pair, "/");
+    return parse(pair, DELIMIT);
   }
 
   public static PairSymbol parse(String pair, String delimiter) {
@@ -23,6 +25,7 @@ public class PairSymbol {
     this.base = base;
     this.terms = terms;
     this.code = base + terms;
+    this.pair = base + DELIMIT + terms;
   }
 
   public PairSymbol invert() {
@@ -48,6 +51,11 @@ public class PairSymbol {
       return base + delimiter + terms;
     }
   }
+
+  public String toPairString() {
+    return pair;
+  }
+
   public String toString() {
     return getCode();
   }

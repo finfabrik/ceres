@@ -147,7 +147,7 @@ public class OrderBookHandler {
 
   public void publishOpen() {
     publisher.publish(builder -> {
-      buildPoint(System.currentTimeMillis(), pair.toString("/"), NULL_STRING, "S", "0", 0D, 0D, builder);
+      buildPoint(System.currentTimeMillis(), pair.toPairString(), NULL_STRING, "S", "0", 0D, 0D, builder);
     });
   }
 
@@ -156,7 +156,7 @@ public class OrderBookHandler {
       return;
     }
 
-    String symbol = pair.toString("/");
+    String symbol = pair.toPairString();
     LOGGER.info("Storing orderbook snapshot for {}", symbol);
 
     try {
@@ -190,7 +190,7 @@ public class OrderBookHandler {
   }
 
   private void publishDelta(long time) {
-    String symbol = pair.toString("/");
+    String symbol = pair.toPairString();
     try {
       Collection<PriceBasedOrderBook.DeltaLevel> delta = orderBook.getDelta();
       int length = (int) (Math.log10(delta.size()) + 1);
