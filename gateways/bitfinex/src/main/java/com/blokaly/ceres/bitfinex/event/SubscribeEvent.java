@@ -5,6 +5,7 @@ public class SubscribeEvent extends AbstractEvent {
     private final String channel;
     private final String prec;
     private final String pair;
+    private final String len = "250";
 
     private SubscribeEvent(String pair, String channel, String prec) {
         super("subscribe");

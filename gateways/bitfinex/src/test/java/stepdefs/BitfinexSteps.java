@@ -107,7 +107,7 @@ public class BitfinexSteps implements En {
         });
 
         Then("^the orderbook for channel (\\d+) should be as:$", (Integer channelId, DataTable book) -> {
-            OrderBookKeeper keeper = injector.getInstance(OrderBookKeeper.class);
+            OrderBookHandler keeper = injector.getInstance(OrderBookHandler.class);
             OrderBasedOrderBook orderBook = keeper.get(channelId);
 
             HashMap<Integer, OrderBook.Level> bidLevels = new HashMap<>();

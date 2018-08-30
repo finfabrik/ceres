@@ -11,6 +11,8 @@ import com.blokaly.ceres.chronicle.ChronicleStoreModule;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Configs;
+import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
+import com.blokaly.ceres.influxdb.ringbuffer.InfluxdbBufferModule;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.blokaly.ceres.system.Services;
@@ -137,6 +139,9 @@ public class BitfinexService {
       bindAllCallbacks();
       bindExpose(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
       bindExpose(BitfinexClient.class).toProvider(BitfinexClientProvider.class).in(Singleton.class);
+
+      install(new InfluxdbBufferModule());
+      bindExpose(BatchedPointsPublisher.class);
     }
 
     @Provides

@@ -17,22 +17,17 @@ public class JsonCracker {
     private final Gson gson;
 
     private final MessageHandler messageHandler;
-    private final ExecutorService executor;
 
     @Inject
-    public JsonCracker(Gson gson, MessageHandler messageHandler, @SingleThread ExecutorService executor) {
+    public JsonCracker(Gson gson, MessageHandler messageHandler) {
         this.gson = gson;
         this.messageHandler = messageHandler;
-        this.executor = executor;
     }
 
     public void crack(String json) {
+        LOGGER.debug("event: {}", json);
         AbstractEvent event = gson.fromJson(json, AbstractEvent.class);
-        LOGGER.debug("event: {}", event);
-        executor.execute(() -> process(event));
-    }
 
-    private void process(AbstractEvent event) {
         EventType type = EventType.get(event.getEvent());
         if (type == null) {
             return;

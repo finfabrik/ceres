@@ -43,6 +43,10 @@ public class OrderBookSnapshot extends ChannelEvent implements MarketDataSnapsho
         return sequence;
     }
 
+    public long getTime() {
+        return sequence;
+    }
+
     @Override
     public Collection<IdBasedOrderInfo> getBids() {
         return bids;

@@ -54,6 +54,10 @@ public class OrderBookRefresh extends ChannelEvent implements MarketDataIncremen
         return sequence;
     }
 
+    public long getTime() {
+        return sequence;
+    }
+
     @Override
     public Collection<IdBasedOrderInfo> orderInfos() {
         return Collections.singletonList(orderInfo);

@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEvent>{
 
-  private static long sequence = 0;
   private final ConcurrentMap<Integer, SubscriptionEvent> channelMap;
 
   @Inject
@@ -23,6 +22,7 @@ public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEve
 
   @Override
   public ChannelEvent handleEvent(JsonElement json, JsonDeserializationContext context) {
+    long now = System.currentTimeMillis();
     JsonArray chanArray = json.getAsJsonArray();
     int channelId = chanArray.get(0).getAsInt();
     SubscriptionEvent sub = channelMap.get(channelId);
@@ -32,13 +32,13 @@ public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEve
 
     JsonElement element = chanArray.get(1);
     if (element.isJsonArray()) {
-      return OrderBookSnapshot.parse(channelId, ++sequence, element.getAsJsonArray());
+      return OrderBookSnapshot.parse(channelId, now, element.getAsJsonArray());
     } else {
       String stringData = element.getAsString();
       if ("hb".equals(stringData)) {
         return new HbEvent(channelId);
       } else {
-        return new OrderBookRefresh(channelId, ++sequence, chanArray);
+        return new OrderBookRefresh(channelId, now, chanArray);
       }
     }
   }

@@ -11,7 +11,6 @@ import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.PublicKey;
 import java.util.concurrent.ConcurrentMap;
 
 @Singleton
@@ -20,25 +19,23 @@ public class MessageHandlerImpl implements MessageHandler {
   private final Gson gson;
   private final Provider<BitfinexClient> clientProvider;
   private final ConcurrentMap<Integer, SubscriptionEvent> channelMap;
-  private final OrderBookKeeper bookKeeper;
-  private final TopOfBookProcessor processor;
+  private final OrderBookHandler orderBookHandler;
 
   @Inject
   public MessageHandlerImpl(Gson gson,
                             Provider<BitfinexClient> clientProvider,
                             @Named("ChannelMap") ConcurrentMap<Integer, SubscriptionEvent> channelMap,
-                            OrderBookKeeper bookKeeper,
+                            OrderBookHandler orderBookHandler,
                             TopOfBookProcessor processor) {
     this.gson = gson;
     this.clientProvider = clientProvider;
     this.channelMap = channelMap;
-    this.bookKeeper = bookKeeper;
-    this.processor = processor;
+    this.orderBookHandler = orderBookHandler;
   }
 
   @Override
   public void onMessage(HbEvent event) {
-    LOGGER.debug("HB[{}]", bookKeeper.getSymbol(event.getChannelId()));
+    LOGGER.debug("HB[{}]", orderBookHandler.getSymbol(event.getChannelId()));
   }
 
   @Override
@@ -66,15 +63,13 @@ public class MessageHandlerImpl implements MessageHandler {
         LOGGER.error("Unsupported version: {}, only v1 supported.", version);
         return;
       }
-      bookKeeper.getAllSymbols().forEach(this::subscribe);
+      orderBookHandler.publishOpen();
+      orderBookHandler.getAllSymbols().forEach(this::subscribe);
     } else {
       InfoEvent.Status status = event.getStatus();
       if (status == InfoEvent.Status.WEB_SOCKET_RESTART || status == InfoEvent.Status.PAUSE) {
         LOGGER.warn("Status is {}, resetting orderbooks...", status);
-        bookKeeper.getAllBooks().forEach(book -> {
-          book.clear();
-          processor.process(book);
-        });
+        orderBookHandler.reset();
         channelMap.clear();
       } else if (status == InfoEvent.Status.RESUME) {
         LOGGER.warn("Status is {}, reconnect ws", status);
@@ -104,26 +99,17 @@ public class MessageHandlerImpl implements MessageHandler {
     int chanId = event.getChanId();
     channelMap.put(chanId, event);
     if (ChannelEvent.ORDERBOOK_CHANNEL.equalsIgnoreCase(event.getChannel())) {
-      bookKeeper.makeOrderBook(chanId, event.getPair());
+      orderBookHandler.makeOrderBook(chanId, event.getPair());
     }
   }
 
   @Override
   public void onMessage(OrderBookSnapshot event) {
-    OrderBasedOrderBook orderBook = bookKeeper.get(event.getChannelId());
-    if (orderBook == null) {
-      throw new IllegalStateException("No order book for channel id " + event.getChannelId());
-    }
-    orderBook.processSnapshot(event);
+    orderBookHandler.processSnapshot(event);
   }
 
   @Override
   public void onMessage(OrderBookRefresh event) {
-    OrderBasedOrderBook orderBook = bookKeeper.get(event.getChannelId());
-    if (orderBook == null) {
-      throw new IllegalStateException("No order book for channel id " + event.getChannelId());
-    }
-    orderBook.processIncrementalUpdate(event);
-    processor.process(orderBook);
+    orderBookHandler.processIncremental(event);
   }
 }
