@@ -12,12 +12,12 @@ import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.influxdb.ringbuffer.PointBuilderFactory;
 import com.blokaly.ceres.orderbook.OrderBasedOrderBook;
 import com.blokaly.ceres.orderbook.OrderBook;
-import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.blokaly.ceres.system.CommonConfigs;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Singleton
 public class OrderBookHandler {
@@ -49,12 +48,16 @@ public class OrderBookHandler {
     private final ScheduledExecutorService ses;
 
     @Inject
-    public OrderBookHandler(Config config, TopOfBookProcessor tobProcessor, BatchedPointsPublisher publisher, @SingleThread ScheduledExecutorService ses) {
+    public OrderBookHandler(Config config,
+                            @Named("SymbolMap") Map<String, PairSymbol> symbols,
+                            TopOfBookProcessor tobProcessor,
+                            BatchedPointsPublisher publisher,
+                            @SingleThread ScheduledExecutorService ses) {
         source = Source.valueOf(config.getString(CommonConfigs.APP_SOURCE).toUpperCase()).getCode();
         this.tobProcessor = tobProcessor;
         this.publisher = publisher;
         this.ses = ses;
-        symbols = config.getStringList("symbols").stream().collect(Collectors.toMap(SymbolFormatter::normalise, PairSymbol::parse));
+        this.symbols = symbols;
         orderbooks = Maps.newHashMap();
         symMap = Maps.newHashMap();
     }

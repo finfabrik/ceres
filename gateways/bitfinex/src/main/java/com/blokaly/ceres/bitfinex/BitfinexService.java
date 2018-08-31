@@ -11,6 +11,8 @@ import com.blokaly.ceres.chronicle.ChronicleStoreModule;
 import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Configs;
+import com.blokaly.ceres.common.PairSymbol;
+import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.influxdb.ringbuffer.InfluxdbBufferModule;
 import com.blokaly.ceres.orderbook.TopOfBookProcessor;
@@ -40,6 +42,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static com.blokaly.ceres.bitfinex.event.EventType.*;
 
@@ -150,6 +153,14 @@ public class BitfinexService {
     @Named("ChannelMap")
     public ConcurrentMap<Integer, SubscriptionEvent> provideChannelMap() {
       return Maps.<Integer, SubscriptionEvent>newConcurrentMap();
+    }
+
+    @Provides
+    @Singleton
+    @Exposed
+    @Named("SymbolMap")
+    public Map<String, PairSymbol> provideSymbolMap(Config config) {
+      return config.getStringList("symbols").stream().collect(Collectors.toMap(SymbolFormatter::normalise, PairSymbol::parse));
     }
 
     @Provides

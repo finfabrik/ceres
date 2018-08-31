@@ -1,14 +1,11 @@
 package com.blokaly.ceres.bitfinex;
 
 import com.blokaly.ceres.bitfinex.event.*;
-import com.blokaly.ceres.binding.SingleThread;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutorService;
 
 @Singleton
 public class JsonCracker {
@@ -54,6 +51,9 @@ public class JsonCracker {
                     break;
                 case REFRESH:
                     messageHandler.onMessage((OrderBookRefresh) event);
+                    break;
+                case TRADE:
+                    messageHandler.onMessage((TradeEvent)event);
                     break;
                 case ERROR:
                     messageHandler.onMessage((ErrorEvent) event);

@@ -20,17 +20,19 @@ public class MessageHandlerImpl implements MessageHandler {
   private final Provider<BitfinexClient> clientProvider;
   private final ConcurrentMap<Integer, SubscriptionEvent> channelMap;
   private final OrderBookHandler orderBookHandler;
+  private final TradesHandler tradesHandler;
 
   @Inject
   public MessageHandlerImpl(Gson gson,
                             Provider<BitfinexClient> clientProvider,
                             @Named("ChannelMap") ConcurrentMap<Integer, SubscriptionEvent> channelMap,
                             OrderBookHandler orderBookHandler,
-                            TopOfBookProcessor processor) {
+                            TradesHandler tradesHandler) {
     this.gson = gson;
     this.clientProvider = clientProvider;
     this.channelMap = channelMap;
     this.orderBookHandler = orderBookHandler;
+    this.tradesHandler = tradesHandler;
   }
 
   @Override
@@ -64,6 +66,7 @@ public class MessageHandlerImpl implements MessageHandler {
         return;
       }
       orderBookHandler.publishOpen();
+      tradesHandler.publishOpen();
       orderBookHandler.getAllSymbols().forEach(this::subscribe);
     } else {
       InfoEvent.Status status = event.getStatus();
@@ -111,5 +114,10 @@ public class MessageHandlerImpl implements MessageHandler {
   @Override
   public void onMessage(OrderBookRefresh event) {
     orderBookHandler.processIncremental(event);
+  }
+
+  @Override
+  public void onMessage(TradeEvent event) {
+    tradesHandler.publishTrades(event);
   }
 }

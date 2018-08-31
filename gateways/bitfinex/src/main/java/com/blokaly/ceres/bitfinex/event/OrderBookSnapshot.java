@@ -19,7 +19,7 @@ public class OrderBookSnapshot extends ChannelEvent implements MarketDataSnapsho
     private final Collection<IdBasedOrderInfo> bids;
     private final Collection<IdBasedOrderInfo> asks;
 
-    public static OrderBookSnapshot parse(int channelId, long sequence, JsonArray data) {
+    public static OrderBookSnapshot parse(int channelId, long time, JsonArray data) {
         if (data == null || data.size()==0) {
             return new OrderBookSnapshot(channelId, 0, Collections.emptyList(), Collections.emptyList());
         }
@@ -28,7 +28,7 @@ public class OrderBookSnapshot extends ChannelEvent implements MarketDataSnapsho
                 .map(elm -> new SnapshotOrderInfo(elm.getAsJsonArray()))
                 .collect(Collectors.partitioningBy(snapshotOrderInfo -> snapshotOrderInfo.side() == OrderInfo.Side.BUY));
 
-        return new OrderBookSnapshot(channelId, sequence, bidAndAsk.get(true), bidAndAsk.get(false));
+        return new OrderBookSnapshot(channelId, time, bidAndAsk.get(true), bidAndAsk.get(false));
     }
 
     private OrderBookSnapshot(int channelId, long sequence, Collection<IdBasedOrderInfo> bids, Collection<IdBasedOrderInfo> asks) {

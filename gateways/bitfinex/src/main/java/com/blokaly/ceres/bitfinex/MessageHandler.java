@@ -19,4 +19,6 @@ public interface MessageHandler {
     void onMessage(PongEvent event);
 
     void onMessage(ErrorEvent event);
+
+    void onMessage(TradeEvent event);
 }
