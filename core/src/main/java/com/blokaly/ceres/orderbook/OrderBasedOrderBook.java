@@ -20,11 +20,13 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
   private final Map<String, PriceLevel> levelByOrderId = Maps.newHashMap();
   private final Map<DecimalNumber, DeltaLevel> delta = Maps.newHashMap();
   private long lastSequence;
+  private long lastUpdTime;
 
   public OrderBasedOrderBook(String symbol, String key) {
     this.symbol = symbol;
     this.key = key;
     this.lastSequence = 0;
+    this.lastUpdTime = 0;
   }
 
   @Override
@@ -106,6 +108,14 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
 
   public Collection<DeltaLevel> getDelta() {
     return delta.values();
+  }
+
+  public long getLastUpdateTime() {
+    return lastUpdTime;
+  }
+
+  public void setLastUpdateTime(long time) {
+    this.lastUpdTime = time;
   }
 
   @Override
