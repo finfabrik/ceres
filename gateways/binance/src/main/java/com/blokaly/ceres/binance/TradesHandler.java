@@ -16,6 +16,7 @@ public class TradesHandler {
   private static final String TRADE_TIME_COL = "tradeTime";
   private static final String TRADE_ID_COL = "tradeId";
   private static final String MAKER_COL = "buyerIsMaker";
+  private static final String RECEIVED_TS_COL = "receivedTime";
   private final PairSymbol pair;
   private final BatchedPointsPublisher publisher;
 
@@ -29,18 +30,19 @@ public class TradesHandler {
     if (pair.getCode().equalsIgnoreCase(trade.getSymbol())) {
       publisher.publish(builder -> {
         String symbol = pair.toPairString();
-        buildPoint(trade.getTime(), symbol, trade.getPrice().asDbl(), trade.getQuantity().asDbl(), trade.getTradeTime(), trade.getTradeId(), trade.isBuyerMarketMaker(), builder);
+        buildPoint(trade.getTime(), symbol, trade.getPrice().asDbl(), trade.getQuantity().asDbl(), trade.getTradeTime(), trade.getTradeId(), trade.isBuyerMarketMaker(), trade.getRecTime(), builder);
       });
     }
   }
 
   public void publishOpen() {
     publisher.publish(builder -> {
-      buildPoint(System.currentTimeMillis(), pair.toPairString(), 0D, 0D, 0L, 0L, false, builder);
+      long now = System.currentTimeMillis();
+      buildPoint(now, pair.toPairString(), 0D, 0D, 0L, 0L, false, now, builder);
     });
   }
 
-  private void buildPoint(long time, String symbol, double price, double size, long tradeTime, long tradeId, boolean isBuyerMaker, PointBuilderFactory.BatchedPointBuilder builder) {
+  private void buildPoint(long time, String symbol, double price, double size, long tradeTime, long tradeId, boolean isBuyerMaker, long recTime, PointBuilderFactory.BatchedPointBuilder builder) {
     builder.measurement(MEASUREMENT).time(time, TimeUnit.MILLISECONDS);
     builder.tag(SYMBOL_COL, symbol.toUpperCase());
     builder.addField(PRICE_COL, price);
@@ -48,5 +50,6 @@ public class TradesHandler {
     builder.addField(TRADE_TIME_COL, tradeTime);
     builder.addField(TRADE_ID_COL, tradeId);
     builder.addField(MAKER_COL, isBuyerMaker);
+    builder.addField(RECEIVED_TS_COL, recTime);
   }
 }

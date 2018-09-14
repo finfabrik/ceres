@@ -8,6 +8,7 @@ import java.util.StringJoiner;
 
 public class TradeEvent {
 
+  private final long recTime;
   private final long evtTime;
   private final String symbol;
   private final long tradeId;
@@ -16,7 +17,8 @@ public class TradeEvent {
   private final long tradeTime;
   private final boolean buyerMaker;
 
-  public TradeEvent(long evtTime, String symbol, long tradeId, DecimalNumber price, DecimalNumber quantity, long tradeTime, boolean buyerMaker) {
+  public TradeEvent(long recTime, long evtTime, String symbol, long tradeId, DecimalNumber price, DecimalNumber quantity, long tradeTime, boolean buyerMaker) {
+    this.recTime = recTime;
     this.evtTime = evtTime;
     this.symbol = symbol;
     this.tradeId = tradeId;
@@ -24,6 +26,10 @@ public class TradeEvent {
     this.quantity = quantity;
     this.tradeTime = tradeTime;
     this.buyerMaker = buyerMaker;
+  }
+
+  public long getRecTime() {
+    return recTime;
   }
 
   public long getTime() {
@@ -69,6 +75,7 @@ public class TradeEvent {
     @Override
     public TradeEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
+      long now = System.currentTimeMillis();
       JsonObject jsonObject = json.getAsJsonObject();
       long evtTime = jsonObject.get("E").getAsLong();
       String symbol = jsonObject.get("s").getAsString();
@@ -77,7 +84,7 @@ public class TradeEvent {
       DecimalNumber quantity = DecimalNumber.fromStr(jsonObject.get("q").getAsString());
       long tradeTime = jsonObject.get("T").getAsLong();
       boolean buyerMaker = jsonObject.get("m").getAsBoolean();
-      return new TradeEvent(evtTime, symbol, tradeId, price, quantity, tradeTime, buyerMaker);
+      return new TradeEvent(now, evtTime, symbol, tradeId, price, quantity, tradeTime, buyerMaker);
     }
   }
 }
