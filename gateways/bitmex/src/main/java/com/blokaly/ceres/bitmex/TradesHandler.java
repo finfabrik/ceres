@@ -21,6 +21,7 @@ public class TradesHandler {
   private static final String SIDE_COL = "side";
   private static final String PRICE_COL = "price";
   private static final String SIZE_COL = "size";
+  private static final String RECEIVED_TS_COL = "receivedTime";
   private final BatchedPointsPublisher publisher;
   private final Set<String> symbols;
 
@@ -30,10 +31,11 @@ public class TradesHandler {
     symbols = orderbooks.keySet();
   }
 
-  public void publishTrades(Collection<Trades.Trade> trades) {
-    trades.forEach(trade -> {
+  public void publishTrades(Trades trades) {
+    long recTime = trades.getTime();
+    trades.getTrades().forEach(trade -> {
       publisher.publish(builder -> {
-        buildPoint(trade.getTime(), trade.getSymbol(), trade.side()== OrderInfo.Side.BUY ? "B" : "S", trade.getPrice().asDbl(), trade.getQuantity().asDbl(), builder);
+        buildPoint(trade.getTime(), trade.getSymbol(), trade.side()== OrderInfo.Side.BUY ? "B" : "S", trade.getPrice().asDbl(), trade.getQuantity().asDbl(), recTime, builder);
       });
     });
   }
@@ -41,16 +43,18 @@ public class TradesHandler {
   public void publieOpen() {
     symbols.forEach(sym -> {
       publisher.publish(builder -> {
-        buildPoint(System.currentTimeMillis(), sym, NULL_STRING, 0D, 0D, builder);
+        long now = System.currentTimeMillis();
+        buildPoint(now, sym, NULL_STRING, 0D, 0D, now, builder);
       });
     });
   }
 
-  private void buildPoint(long time, String symbol, String side, double price, double size, PointBuilderFactory.BatchedPointBuilder builder) {
+  private void buildPoint(long time, String symbol, String side, double price, double size, long recTime, PointBuilderFactory.BatchedPointBuilder builder) {
     builder.measurement(MEASUREMENT).time(time, TimeUnit.MILLISECONDS);
     builder.tag(SYMBOL_COL, symbol.toUpperCase());
     builder.tag(SIDE_COL, side);
     builder.addField(PRICE_COL, price);
     builder.addField(SIZE_COL, size);
+    builder.addField(RECEIVED_TS_COL, recTime);
   }
 }

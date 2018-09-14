@@ -62,7 +62,6 @@ public class MessageHandlerImpl implements MessageHandler {
 
   @Override
   public void onMessage(Trades trades) {
-    Collection<Trades.Trade> tradeBag = trades.getTrades();
-    tradesHandler.publishTrades(tradeBag);
+    tradesHandler.publishTrades(trades);
   }
 }
