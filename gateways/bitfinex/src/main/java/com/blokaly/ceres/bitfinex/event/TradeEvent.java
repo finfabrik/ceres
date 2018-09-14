@@ -15,25 +15,30 @@ import java.util.stream.StreamSupport;
 
 public class TradeEvent extends ChannelEvent {
   private static final Logger LOGGER = LoggerFactory.getLogger(TradeEvent.class);
+  private final long recTime;
   private final Collection<Trade> trades;
 
-  private TradeEvent(int channel) {
-   super(channel, "trade");
-    trades = Collections.emptyList();
+  private TradeEvent(long recTime, int channel) {
+    this(recTime, channel, Collections.emptyList());
   }
 
-  public TradeEvent(int channelId, List<Trade> trades) {
+  private TradeEvent(long recTime, int channelId, List<Trade> trades) {
     super(channelId, "trade");
+    this.recTime = recTime;
     this.trades = trades;
+  }
+
+  public long getRecTime() {
+    return recTime;
   }
 
   public Collection<Trade> getTrades() {
     return trades;
   }
 
-  public static TradeEvent parse(int channelId, JsonArray data) {
+  public static TradeEvent parse(long recTime, int channelId, JsonArray data) {
     if (data == null || data.size()==0) {
-      return new TradeEvent(channelId);
+      return new TradeEvent(recTime, channelId);
     }
 
     List<Trade> trades = Collections.emptyList();
@@ -49,7 +54,7 @@ public class TradeEvent extends ChannelEvent {
       LOGGER.error("Error parsing message: " + data, ex);
     }
 
-    return new TradeEvent(channelId, trades);
+    return new TradeEvent(recTime, channelId, trades);
   }
 
   public static class Trade {

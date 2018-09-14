@@ -38,7 +38,7 @@ public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEve
         return parseOrderBookEvent(now, jsonArray, channelId);
       }
       case ChannelEvent.TRADE_CHANNEL:{
-        return parseTradeEvent(jsonArray, channelId);
+        return parseTradeEvent(now, jsonArray, channelId);
       }
       default: return ChannelEvent.UNKNOWN_EVENT;
     }
@@ -60,16 +60,16 @@ public class ChannelCallbackHandler implements CommandCallbackHandler<ChannelEve
     }
   }
 
-  private ChannelEvent parseTradeEvent(JsonArray jsonArray, int channelId) {
+  private ChannelEvent parseTradeEvent(long now, JsonArray jsonArray, int channelId) {
     JsonElement element = jsonArray.get(1);
     if (element.isJsonArray()) {
-      return TradeEvent.parse(channelId, element.getAsJsonArray());
+      return TradeEvent.parse(now, channelId, element.getAsJsonArray());
     } else {
       String stringData = element.getAsString();
       if ("hb".equals(stringData)) {
         return new HbEvent(channelId);
       } else {
-        return TradeEvent.parse(channelId, jsonArray);
+        return TradeEvent.parse(now, channelId, jsonArray);
       }
     }
   }

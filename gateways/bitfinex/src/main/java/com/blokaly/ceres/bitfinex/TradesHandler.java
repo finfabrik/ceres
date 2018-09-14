@@ -20,6 +20,7 @@ public class TradesHandler {
   private static final String SIZE_COL = "size";
   private static final String SIDE_COL = "side";
   private static final String TRADE_ID_COL = "tradeId";
+  private static final String RECEIVED_TS_COL = "receivedTime";
   private static final String NULL_STRING = "-";
   private final Map<String, PairSymbol> symbols;
   private final ConcurrentMap<Integer, SubscriptionEvent> channelMap;
@@ -43,10 +44,11 @@ public class TradesHandler {
 
     PairSymbol pair = symbols.get(sub.getPair().toLowerCase());
     if (pair!=null) {
+      long recTime = evt.getRecTime();
       evt.getTrades().forEach(trade -> {
         publisher.publish(builder -> {
           String side = trade.getSide() == OrderInfo.Side.BUY ? "B" : "S";
-          buildPoint(trade.getTime(), pair.toPairString(), trade.getPrice().asDbl(), trade.getQuantity().asDbl(), side, trade.getTradeId(), builder);
+          buildPoint(trade.getTime(), pair.toPairString(), trade.getPrice().asDbl(), trade.getQuantity().asDbl(), side, trade.getTradeId(), recTime, builder);
         });
       });
     }
@@ -55,19 +57,21 @@ public class TradesHandler {
   public void publishOpen() {
     symbols.values().forEach(pair -> {
       publisher.publish(builder -> {
-        buildPoint(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), pair.toPairString(), 0D, 0D, NULL_STRING, 0L, builder);
+        long now = System.currentTimeMillis();
+        buildPoint(TimeUnit.MILLISECONDS.toSeconds(now), pair.toPairString(), 0D, 0D, NULL_STRING, 0L, now, builder);
       });
     });
 
   }
 
-  private void buildPoint(long time, String symbol, double price, double size, String side, long tradeId, PointBuilderFactory.BatchedPointBuilder builder) {
+  private void buildPoint(long time, String symbol, double price, double size, String side, long tradeId, long recTime, PointBuilderFactory.BatchedPointBuilder builder) {
     builder.measurement(MEASUREMENT).time(time, TimeUnit.SECONDS);
     builder.tag(SYMBOL_COL, symbol.toUpperCase());
     builder.addField(PRICE_COL, price);
     builder.addField(SIZE_COL, size);
     builder.addField(SIDE_COL, side);
     builder.addField(TRADE_ID_COL, tradeId);
+    builder.addField(RECEIVED_TS_COL, recTime);
   }
 
 }
