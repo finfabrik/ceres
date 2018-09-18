@@ -17,10 +17,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class OrderBookHandler {
@@ -36,12 +36,18 @@ public class OrderBookHandler {
   private final Map<String, OrderBasedOrderBook> orderbooks;
   private final BatchedPointsPublisher publisher;
   private final ScheduledExecutorService ses;
+  private final AtomicLong lastDeltaUpdTime;
+  private final AtomicInteger deltaPrefix;
+  private final AtomicInteger deltaCounter;
 
   @Inject
   public OrderBookHandler(Map<String, OrderBasedOrderBook> orderbooks, BatchedPointsPublisher publisher, @SingleThread ScheduledExecutorService ses) {
     this.orderbooks = orderbooks;
     this.publisher = publisher;
     this.ses = ses;
+    lastDeltaUpdTime = new AtomicLong(0);
+    deltaPrefix = new AtomicInteger(0);
+    deltaCounter = new AtomicInteger(0);
   }
 
   @PostConstruct
@@ -142,20 +148,28 @@ public class OrderBookHandler {
   private void publishDelta(long time, OrderBasedOrderBook book) {
     String symbol = book.getSymbol();
     try {
-
       Collection<OrderBasedOrderBook.DeltaLevel> delta = book.getDelta();
       int length = (int) (Math.log10(delta.size()) + 1);
-      String intraTimeFormat = "%0" + length + "d";
-      final AtomicInteger counter = new AtomicInteger(1);
+      final String intraTimeFormat;
+      if (lastDeltaUpdTime.get() == time) {
+        intraTimeFormat = String.valueOf(deltaPrefix.incrementAndGet()) + "%0" + length + "d";
+      } else {
+        deltaPrefix.set(0);
+        intraTimeFormat = "%0" + length + "d";;
+      }
+
       delta.forEach(level -> {
         publisher.publish(builder -> {
           String side = level.getSide() == OrderInfo.Side.BUY ? "B" : "S";
-          String intraTs = String.format(intraTimeFormat, counter.getAndIncrement());
+          String intraTs = String.format(intraTimeFormat, deltaCounter.incrementAndGet());
           double price = level.getPrice().asDbl();
           double size = level.getQuantity().asDbl();
           buildPoint(time, symbol, side, getAction(level.getType()), intraTs, price, size, builder);
         });
       });
+
+      lastDeltaUpdTime.set(time);
+      deltaCounter.set(0);
 
     } catch (Exception ex) {
       LOGGER.error("Failed to process delta for " + symbol, ex);
