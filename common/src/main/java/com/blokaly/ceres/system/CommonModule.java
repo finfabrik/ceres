@@ -35,6 +35,17 @@ public class CommonModule extends AbstractModule {
     bind(StdRedirect.class).asEagerSingleton();
   }
 
+  @Provides
+  @Singleton
+  public CeresClock provideClock(Config config) {
+    Boolean useNativeClock = Configs.getOrDefault(config, "app.clock.nano", Configs.BOOLEAN_EXTRACTOR, false);
+    if (useNativeClock) {
+      return new Clock();
+    } else {
+      return new JavaClock();
+    }
+  }
+
   @Provides @Singleton
   public ThreadFactory provideThreadFactory(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
     ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
