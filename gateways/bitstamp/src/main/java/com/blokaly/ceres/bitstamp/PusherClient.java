@@ -63,17 +63,11 @@ public class PusherClient implements ConnectionEventListener, ChannelEventListen
   public void onSubscriptionSucceeded(String channelName) {
     logger.info("{} subscription succeeded", channelName);
     if (channelName != null) {
-      switch (channelName) {
-        case FULL_ORDER_BOOK:
-        {
-          orderBookHandler.start();
-          break;
-        }
-        case TICKER:
-        {
-          tradesHandler.publishOpen(clock.nanos(), pair.toPairString());
-          break;
-        }
+      if (channelName.startsWith(FULL_ORDER_BOOK)) {
+        orderBookHandler.start();
+      }
+      if (channelName.startsWith(TICKER)) {
+        tradesHandler.publishOpen(clock.nanos(), pair.toPairString());
       }
     }
   }
