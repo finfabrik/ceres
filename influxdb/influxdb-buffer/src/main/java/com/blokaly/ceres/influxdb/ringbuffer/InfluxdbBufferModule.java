@@ -2,6 +2,7 @@ package com.blokaly.ceres.influxdb.ringbuffer;
 
 import com.blokaly.ceres.binding.CeresModule;
 import com.blokaly.ceres.binding.SingleThread;
+import com.blokaly.ceres.common.Configs;
 import com.blokaly.ceres.influxdb.InfluxdbModule;
 import com.google.inject.Exposed;
 import com.google.inject.Provides;
@@ -24,11 +25,12 @@ public class InfluxdbBufferModule extends CeresModule {
   @Exposed
   public Disruptor<PointBuilderFactory.BatchedPointBuilder> provideDisruptor(Config config, InfluxDB influxDB, @SingleThread ExecutorService executor) {
     PointBuilderFactory factory = new PointBuilderFactory();
-    int bufferSize = config.hasPath("influxdb.buffer")? config.getInt("influxdb.buffer") : 128;
-    int batchSize = config.hasPath("influxdb.batch") ? config.getInt("influxdb.batch") : 100;
+    int bufferSize = Configs.getOrDefault(config, "influxdb.buffer", Configs.INTEGER_EXTRACTOR, 128);
+    int batchSize = Configs.getOrDefault(config, "influxdb.batch.size", Configs.INTEGER_EXTRACTOR, 100);
+    int batchInterval = Configs.getOrDefault(config, "influxdb.batch.interval", Configs.INTEGER_EXTRACTOR, 5);
     Disruptor<PointBuilderFactory.BatchedPointBuilder> disruptor = new Disruptor<>(factory, bufferSize, executor);
     String database = config.getString("influxdb.database");
-    disruptor.handleEventsWith(new BatchedPointsHandler(influxDB, database, batchSize));
+    disruptor.handleEventsWith(new BatchedPointsHandler(influxDB, database, batchSize, batchInterval));
     disruptor.start();
     return disruptor;
   }

@@ -9,18 +9,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class BatchedPointsHandler implements EventHandler<PointBuilderFactory.BatchedPointBuilder> {
   private static final Logger LOGGER = LoggerFactory.getLogger(BatchedPointsHandler.class);
-  private static final long IDLE = 5000;
+  private final long batchInterval;
   private final int batchSize;
   private final InfluxdbWriter writer;
   private final List<Point> batch = new ArrayList<Point>();
   private long lastProcessed;
 
-  public BatchedPointsHandler(InfluxDB influxDB, String database, int batchSize) {
+  public BatchedPointsHandler(InfluxDB influxDB, String database, int batchSize, int batchInterval) {
     this.writer = new InfluxdbWriter(influxDB, database);
     this.batchSize = batchSize;
+    this.batchInterval = TimeUnit.SECONDS.toMillis(batchInterval);
   }
 
 
@@ -31,7 +33,7 @@ public class BatchedPointsHandler implements EventHandler<PointBuilderFactory.Ba
     Point point = builder.build();
     batch.add(point);
     builder.reset();
-    if (batch.size() >= batchSize || now - lastProcessed >= IDLE)
+    if (batch.size() >= batchSize || now - lastProcessed >= batchInterval)
     {
       processBatch(now);
     }
