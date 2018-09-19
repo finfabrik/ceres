@@ -2,8 +2,11 @@ package com.blokaly.ceres.bitstamp.event;
 
 import com.blokaly.ceres.data.MarketDataSnapshot;
 import com.blokaly.ceres.data.OrderInfo;
-import com.google.gson.JsonArray;
+import com.google.gson.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,4 +53,19 @@ public class OrderBookEvent implements MarketDataSnapshot<OrderInfo> {
                 ", asks=" + asks +
                 '}';
     }
+
+  public static class OrderBookEventAdapter implements JsonDeserializer<OrderBookEvent> {
+
+      private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookEventAdapter.class);
+
+      @Override
+      public OrderBookEvent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+          JsonObject jsonObject = json.getAsJsonObject();
+          long sequence = jsonObject.get("timestamp").getAsLong();
+          JsonArray bids = jsonObject.get("bids").getAsJsonArray();
+          JsonArray asks = jsonObject.get("asks").getAsJsonArray();
+          return parse(sequence, bids, asks);
+      }
+  }
 }
