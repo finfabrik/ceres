@@ -3,8 +3,6 @@ package com.blokaly.ceres.binance;
 import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.StreamEvent;
 import com.blokaly.ceres.binance.event.TradeEvent;
-import com.blokaly.ceres.chronicle.PayloadType;
-import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.network.WSConnectionListener;
 import com.google.gson.Gson;
@@ -23,7 +21,6 @@ public class BinanceClient extends WebSocketClient {
   private final PairSymbol pair;
   private final OrderBookHandler orderBookHandler;
   private final TradesHandler tradesHandler;
-  private final WriteStore store;
   private final Gson gson;
   private final WSConnectionListener listener;
 
@@ -31,14 +28,12 @@ public class BinanceClient extends WebSocketClient {
                        URI serverURI,
                        OrderBookHandler orderBookHandler,
                        TradesHandler tradesHandler,
-                       WriteStore store,
                        Gson gson,
                        WSConnectionListener listener) {
     super(serverURI);
     this.pair = pair;
     this.orderBookHandler = orderBookHandler;
     this.tradesHandler = tradesHandler;
-    this.store = store;
     this.gson = gson;
     this.listener = listener;
     LOGGER.info("client initiated for {}", pair.getCode());
@@ -50,7 +45,6 @@ public class BinanceClient extends WebSocketClient {
   public void onOpen(ServerHandshake handshake) {
     LOGGER.info("ws open, status - {}:{}", handshake.getHttpStatus(), handshake.getHttpStatusMessage());
     String symbol = pair.getCode();
-    store.save(PayloadType.OPEN, symbol);
     orderBookHandler.init();
     tradesHandler.publishOpen();
     if (listener != null) {
@@ -61,7 +55,6 @@ public class BinanceClient extends WebSocketClient {
   @Override
   public void onMessage(String message) {
     LOGGER.debug("ws message: {}", message);
-    store.save(PayloadType.JSON, message);
     if (stop) {
       return;
     }
@@ -87,7 +80,6 @@ public class BinanceClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     LOGGER.info("ws close: {}", reason);
     String symbol = orderBookHandler.getSymbol();
-    store.save(PayloadType.CLOSE, symbol);
     orderBookHandler.reset();
     if (listener != null) {
       listener.onDisconnected(symbol);

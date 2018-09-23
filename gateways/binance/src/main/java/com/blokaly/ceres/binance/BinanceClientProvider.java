@@ -2,7 +2,6 @@ package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.StreamEvent;
 import com.blokaly.ceres.binding.SingleThread;
-import com.blokaly.ceres.chronicle.WriteStoreProvider;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
@@ -32,7 +31,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   private final String wsUrl;
   private final Gson gson;
   private final TopOfBookProcessor processor;
-  private final WriteStoreProvider storeProvider;
   private final BatchedPointsPublisher publisher;
   private final ScheduledExecutorService ese;
   private final Provider<ExecutorService> esProvider;
@@ -44,7 +42,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   public BinanceClientProvider(Config config,
                                Gson gson,
                                TopOfBookProcessor processor,
-                               WriteStoreProvider storeProvider,
                                BatchedPointsPublisher publisher,
                                @SingleThread ScheduledExecutorService scheduledExecutorService,
                                @SingleThread Provider<ExecutorService> esProvider
@@ -55,7 +52,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     symbols = config.getStringList("symbols");
     this.gson = gson;
     this.processor = processor;
-    this.storeProvider = storeProvider;
     this.publisher = publisher;
     this.ese = scheduledExecutorService;
     this.esProvider = esProvider;
@@ -69,9 +65,9 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
         String code = pair.getCode();
         URI uri = new URI(wsUrl + getStreams(code));
         OrderBookHandler orderBookHandler = new OrderBookHandler(pair, new PriceBasedOrderBook(code, code + "." + source),
-            processor, gson, storeProvider.get(), publisher, ese, esProvider.get());
+            processor, gson, publisher, ese, esProvider.get());
         TradesHandler tradesHandler = new TradesHandler(pair, publisher);
-        BinanceClient client = new BinanceClient(pair, uri, orderBookHandler, tradesHandler, storeProvider.get(), gson, this);
+        BinanceClient client = new BinanceClient(pair, uri, orderBookHandler, tradesHandler, gson, this);
         clients.put(code, client);
       } catch (Exception ex) {
         LOGGER.error("Error creating websocket for symbol: " + sym, ex);
@@ -92,7 +88,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     if (diabled) {
       init();
       diabled = false;
-      storeProvider.begin();
       clients.values().forEach(BinanceClient::connect);
     }
   }
@@ -101,7 +96,6 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
     if (!diabled) {
       diabled = true;
       clients.values().forEach(BinanceClient::stop);
-      storeProvider.end();
     }
   }
 

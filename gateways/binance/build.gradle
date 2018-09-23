@@ -3,7 +3,6 @@ dependencies {
     compile project(':kafka:kclient')
     compile project(':kafka:kstream')
     compile project(':webserver:server')
-    compile project(':chronicle:store')
     compile project(':influxdb:influxdb-buffer')
     compile "org.java-websocket:Java-WebSocket:1.3.8"
 }

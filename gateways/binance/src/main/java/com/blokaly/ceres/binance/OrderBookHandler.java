@@ -2,8 +2,6 @@ package com.blokaly.ceres.binance;
 
 import com.blokaly.ceres.binance.event.DiffBookEvent;
 import com.blokaly.ceres.binance.event.OrderBookEvent;
-import com.blokaly.ceres.chronicle.PayloadType;
-import com.blokaly.ceres.chronicle.WriteStore;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.data.MarketDataIncremental;
 import com.blokaly.ceres.data.OrderInfo;
@@ -44,7 +42,6 @@ public class OrderBookHandler {
   private final PriceBasedOrderBook orderBook;
   private final TopOfBookProcessor processor;
   private final Gson gson;
-  private final WriteStore store;
   private final BatchedPointsPublisher publisher;
   private final ScheduledExecutorService ses;
   private final ExecutorService es;
@@ -56,7 +53,6 @@ public class OrderBookHandler {
                           PriceBasedOrderBook orderBook,
                           TopOfBookProcessor processor,
                           Gson gson,
-                          WriteStore store,
                           BatchedPointsPublisher publisher,
                           ScheduledExecutorService scheduledExecutorService,
                           ExecutorService executorService) {
@@ -64,7 +60,6 @@ public class OrderBookHandler {
     this.orderBook = orderBook;
     this.processor = processor;
     this.gson = gson;
-    this.store = store;
     this.publisher = publisher;
     this.ses = scheduledExecutorService;
     this.es = executorService;
@@ -124,7 +119,6 @@ public class OrderBookHandler {
             JsonObject jsonObj = new JsonObject();
             jsonObj.addProperty("stream", symbol + "@snapshot");
             jsonObj.add("data", parser.parse(jsonResponse));
-            store.save(PayloadType.JSON, jsonObj.toString());
             orderBook.processSnapshot(snapshot);
             publishBook(eventTime);
           }
