@@ -1,7 +1,6 @@
 package com.blokaly.ceres.bitmex;
 
 import com.blokaly.ceres.binding.SingleThread;
-import com.blokaly.ceres.chronicle.WriteStoreProvider;
 import com.blokaly.ceres.network.WSConnectionAdapter;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -16,13 +15,11 @@ import java.util.concurrent.ScheduledExecutorService;
 public class BitmexClientProvider extends WSConnectionAdapter implements Provider<BitmexClient> {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitmexClientProvider.class);
   private final BitmexClient client;
-  private final WriteStoreProvider storeProvider;
 
   @Inject
-  public BitmexClientProvider(URI serverURI, WriteStoreProvider storeProvider, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
+  public BitmexClientProvider(URI serverURI, JsonCracker cracker, @SingleThread ScheduledExecutorService executorService) {
     super(executorService);
-    this.storeProvider = storeProvider;
-    client = new BitmexClient(serverURI, storeProvider.get(), cracker, this);
+    client = new BitmexClient(serverURI, cracker, this);
   }
 
   @Override
@@ -33,7 +30,6 @@ public class BitmexClientProvider extends WSConnectionAdapter implements Provide
   public void start() {
     LOGGER.info("Starting...");
     diabled = false;
-    storeProvider.begin();
     client.connect();
   }
 
@@ -41,7 +37,6 @@ public class BitmexClientProvider extends WSConnectionAdapter implements Provide
     LOGGER.info("Stopping...");
     diabled = true;
     client.stop();
-    storeProvider.end();
   }
 
   @Override

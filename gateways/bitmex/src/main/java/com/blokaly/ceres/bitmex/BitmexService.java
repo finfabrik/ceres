@@ -5,9 +5,6 @@ import com.blokaly.ceres.binding.CeresModule;
 import com.blokaly.ceres.bitmex.event.Incremental;
 import com.blokaly.ceres.bitmex.event.Snapshot;
 import com.blokaly.ceres.bitmex.event.Trades;
-import com.blokaly.ceres.chronicle.ChronicleStoreModule;
-import com.blokaly.ceres.chronicle.WriteStore;
-import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Source;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
@@ -19,11 +16,12 @@ import com.blokaly.ceres.system.Services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
-import com.google.inject.*;
+import com.google.inject.Exposed;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
-import com.lmax.disruptor.dsl.Disruptor;
 import com.typesafe.config.Config;
-import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 
 import java.net.URI;
 import java.util.List;
@@ -58,8 +56,6 @@ public class BitmexService {
 
     @Override
     protected void configure() {
-
-      configChronicle();
 
       MapBinder<Class, JsonDeserializer> binder = MapBinder.newMapBinder(binder(), Class.class, JsonDeserializer.class);
       binder.addBinding(Snapshot.class).to(Snapshot.Adapter.class);
@@ -100,14 +96,6 @@ public class BitmexService {
         String symbol = SymbolFormatter.normalise(sym);
         return new OrderBasedOrderBook(symbol, symbol + "." + source);
       }));
-    }
-
-    private void configChronicle() {
-      install(new ChronicleStoreModule());
-      TypeLiteral<Disruptor<StringPayload>> disruptorTypeLiteral = new TypeLiteral<Disruptor<StringPayload>>() {};
-      expose(disruptorTypeLiteral);
-      expose(SingleChronicleQueue.class);
-      expose(WriteStore.class);
     }
   }
 
