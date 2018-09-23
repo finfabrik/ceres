@@ -7,35 +7,33 @@ import com.blokaly.ceres.bitfinex.callback.*;
 import com.blokaly.ceres.bitfinex.event.AbstractEvent;
 import com.blokaly.ceres.bitfinex.event.EventType;
 import com.blokaly.ceres.bitfinex.event.SubscriptionEvent;
-import com.blokaly.ceres.chronicle.ChronicleStoreModule;
-import com.blokaly.ceres.chronicle.WriteStore;
-import com.blokaly.ceres.chronicle.ringbuffer.StringPayload;
 import com.blokaly.ceres.common.Configs;
 import com.blokaly.ceres.common.PairSymbol;
 import com.blokaly.ceres.data.SymbolFormatter;
 import com.blokaly.ceres.influxdb.ringbuffer.BatchedPointsPublisher;
 import com.blokaly.ceres.influxdb.ringbuffer.InfluxdbBufferModule;
-import com.blokaly.ceres.orderbook.TopOfBookProcessor;
-import com.blokaly.ceres.system.CommonConfigs;
-import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.kafka.HBProducer;
 import com.blokaly.ceres.kafka.KafkaCommonModule;
 import com.blokaly.ceres.kafka.KafkaStreamModule;
 import com.blokaly.ceres.kafka.ToBProducer;
+import com.blokaly.ceres.orderbook.TopOfBookProcessor;
+import com.blokaly.ceres.system.CommonConfigs;
+import com.blokaly.ceres.system.Services;
 import com.blokaly.ceres.web.HandlerModule;
 import com.blokaly.ceres.web.UndertowModule;
 import com.blokaly.ceres.web.handlers.HealthCheckHandler;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.*;
+import com.google.inject.Exposed;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.lmax.disruptor.dsl.Disruptor;
 import com.typesafe.config.Config;
 import io.undertow.Undertow;
-import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 
@@ -137,7 +135,6 @@ public class BitfinexService {
 
       configUndertow();
       configKafka();
-      configChronicle();
 
       bindAllCallbacks();
       bindExpose(MessageHandler.class).to(MessageHandlerImpl.class).in(Singleton.class);
@@ -185,14 +182,6 @@ public class BitfinexService {
       binder.addBinding(CHANNEL).to(ChannelCallbackHandler.class);
       binder.addBinding(PING).to(PingPongCallbackHandler.class);
       binder.addBinding(PONG).to(PingPongCallbackHandler.class);
-    }
-
-    private void configChronicle() {
-      install(new ChronicleStoreModule());
-      TypeLiteral<Disruptor<StringPayload>> disruptorTypeLiteral = new TypeLiteral<Disruptor<StringPayload>>() {};
-      expose(disruptorTypeLiteral);
-      expose(SingleChronicleQueue.class);
-      expose(WriteStore.class);
     }
 
     private void configKafka() {
