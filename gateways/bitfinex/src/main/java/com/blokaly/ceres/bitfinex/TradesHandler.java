@@ -58,7 +58,7 @@ public class TradesHandler {
     symbols.values().forEach(pair -> {
       publisher.publish(builder -> {
         long now = System.currentTimeMillis();
-        buildPoint(TimeUnit.MILLISECONDS.toSeconds(now), pair.toPairString(), 0D, 0D, NULL_STRING, 0L, now, builder);
+        buildPoint(TimeUnit.MILLISECONDS.toSeconds(now), pair.toPairString(), 0D, 0D, NULL_STRING, Integer.MIN_VALUE, now, builder);
       });
     });
 
@@ -70,8 +70,10 @@ public class TradesHandler {
     builder.addField(PRICE_COL, price);
     builder.addField(SIZE_COL, size);
     builder.addField(SIDE_COL, side);
-    builder.addField(TRADE_ID_COL, tradeId);
-    builder.addField(RECEIVED_TS_COL, recTime);
+    if (tradeId >= 0) {
+      builder.addField(TRADE_ID_COL, tradeId);
+      builder.addField(RECEIVED_TS_COL, recTime);
+    }
   }
 
 }

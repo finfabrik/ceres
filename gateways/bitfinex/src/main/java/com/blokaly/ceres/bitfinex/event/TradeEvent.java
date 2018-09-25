@@ -94,19 +94,19 @@ public class TradeEvent extends ChannelEvent {
     }
 
     private static Trade parse(JsonArray trade) {
-      if (trade.size() == 4) {
+      if (trade.size() == 4) { // historical messages
         long time = trade.get(1).getAsLong();
         DecimalNumber price = DecimalNumber.fromStr(trade.get(2).getAsString());
         DecimalNumber size = DecimalNumber.fromStr(trade.get(3).getAsString());
         OrderInfo.Side side = size.compareTo(DecimalNumber.ZERO) >0 ? OrderInfo.Side.BUY : OrderInfo.Side.SELL;
-        return new Trade(time, price, size.abs(), side, 0L);
-      } else if (trade.size() == 6) {
+        return new Trade(time, price, size.abs(), side, Integer.MIN_VALUE);
+      } else if (trade.size() == 6) { // 'te' message
         long time = trade.get(3).getAsLong();
         DecimalNumber price = DecimalNumber.fromStr(trade.get(4).getAsString());
         DecimalNumber size = DecimalNumber.fromStr(trade.get(5).getAsString());
         OrderInfo.Side side = size.compareTo(DecimalNumber.ZERO) >0 ? OrderInfo.Side.BUY : OrderInfo.Side.SELL;
         return new Trade(time, price, size.abs(), side, 0L);
-      } else if (trade.size() == 7) {
+      } else if (trade.size() == 7) { // 'tu' message
         long tradeId = trade.get(3).getAsLong();
         long time = trade.get(4).getAsLong();
         DecimalNumber price = DecimalNumber.fromStr(trade.get(5).getAsString());
