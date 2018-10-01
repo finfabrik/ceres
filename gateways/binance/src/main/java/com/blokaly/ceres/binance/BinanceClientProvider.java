@@ -85,16 +85,16 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
   }
 
   public void start() {
-    if (diabled) {
+    if (disabled) {
       init();
-      diabled = false;
+      disabled = false;
       clients.values().forEach(BinanceClient::connect);
     }
   }
 
   public void stop() {
-    if (!diabled) {
-      diabled = true;
+    if (!disabled) {
+      disabled = true;
       clients.values().forEach(BinanceClient::stop);
     }
   }
@@ -107,7 +107,7 @@ public class BinanceClientProvider extends WSConnectionAdapter implements Provid
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       clients.get(id).stop();
     }
   }

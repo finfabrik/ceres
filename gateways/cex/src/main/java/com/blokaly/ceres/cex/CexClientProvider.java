@@ -8,7 +8,6 @@ import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
 import java.net.URI;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -28,12 +27,12 @@ public class CexClientProvider extends WSConnectionAdapter implements Provider<C
   }
 
   public void start() {
-    diabled = false;
+    disabled = false;
     client.connect();
   }
 
   public void stop() {
-    diabled = true;
+    disabled = true;
     client.stop();
   }
 
@@ -45,7 +44,7 @@ public class CexClientProvider extends WSConnectionAdapter implements Provider<C
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       client.stop();
     }
   }

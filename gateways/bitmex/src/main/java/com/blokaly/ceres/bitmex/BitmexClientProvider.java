@@ -29,13 +29,13 @@ public class BitmexClientProvider extends WSConnectionAdapter implements Provide
 
   public void start() {
     LOGGER.info("Starting...");
-    diabled = false;
+    disabled = false;
     client.connect();
   }
 
   public void stop() {
     LOGGER.info("Stopping...");
-    diabled = true;
+    disabled = true;
     client.stop();
   }
 
@@ -47,7 +47,7 @@ public class BitmexClientProvider extends WSConnectionAdapter implements Provide
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       client.stop();
     }
   }

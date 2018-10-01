@@ -10,11 +10,11 @@ public abstract class WSConnectionAdapter implements WSConnectionListener {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
   private final ScheduledExecutorService executorService;
-  protected volatile boolean diabled;
+  protected volatile boolean disabled;
 
   protected WSConnectionAdapter(ScheduledExecutorService executorService) {
     this.executorService = executorService;
-    this.diabled = true;
+    this.disabled = true;
   }
 
   @Override
@@ -25,7 +25,7 @@ public abstract class WSConnectionAdapter implements WSConnectionListener {
   @Override
   public void onDisconnected(String id) {
     logger.info("WS client [{}] disconnected", id);
-    if (!diabled) {
+    if (!disabled) {
       executorService.schedule(()->{establishConnection(id);}, 5, TimeUnit.SECONDS);
     }
   }

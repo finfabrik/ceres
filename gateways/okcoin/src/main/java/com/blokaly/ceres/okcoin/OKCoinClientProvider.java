@@ -26,12 +26,12 @@ public class OKCoinClientProvider  extends WSConnectionAdapter implements Provid
   }
 
   public void start() {
-    diabled = false;
+    disabled = false;
     client.connect();
   }
 
   public void stop() {
-    diabled = true;
+    disabled = true;
     client.stop();
   }
 
@@ -43,7 +43,7 @@ public class OKCoinClientProvider  extends WSConnectionAdapter implements Provid
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       client.stop();
     }
   }

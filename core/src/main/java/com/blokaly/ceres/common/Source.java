@@ -15,7 +15,7 @@ public enum Source {
   BITFINEX("BIFX", 3),
   BITSTAMP("BISP", 4),
   ANXPRO("ANXP", 5),
-  KRAKEN("KRAK", 6),
+  KRAKEN("KAKN", 6),
   COINMARKETCAP("CMCP", 7),
   BINANCE("BIAN", 8),
   QUOINEX("QUIN", 9),
@@ -24,8 +24,9 @@ public enum Source {
   BITTREX("BTRX", 12),
   OKCOIN("OKCN", 13),
   OKEX("OKEX", 14),
-  KUCOIN("KOCO", 15),
-  BITMEX("BTMX", 16)
+  KUCOIN("KUCN", 15),
+  HITBTC("HBTC",16),
+  NASDAQ("XNAS", 101)
   ;
 
   private static final Map<String, Source> CODE_MAP = new HashMap<String, Source>();

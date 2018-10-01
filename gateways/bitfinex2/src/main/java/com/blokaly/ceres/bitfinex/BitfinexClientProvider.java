@@ -28,18 +28,18 @@ public class BitfinexClientProvider extends WSConnectionAdapter implements Provi
   }
 
   public void start() {
-    diabled = false;
+    disabled = false;
     client.connect();
   }
 
   public void stop() {
-    diabled = true;
+    disabled = true;
     client.stop();
   }
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       client.stop();
     }
   }

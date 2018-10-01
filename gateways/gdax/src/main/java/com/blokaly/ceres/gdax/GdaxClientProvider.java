@@ -8,7 +8,6 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
 import java.net.URI;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -29,12 +28,12 @@ public class GdaxClientProvider extends WSConnectionAdapter implements Provider<
   }
 
   public void start() {
-    diabled = false;
+    disabled = false;
     client.connect();
   }
 
   public void stop() {
-    diabled = true;
+    disabled = true;
     client.stop();
   }
 
@@ -46,7 +45,7 @@ public class GdaxClientProvider extends WSConnectionAdapter implements Provider<
 
   @Override
   public void reconnect(String id) {
-    if (!diabled) {
+    if (!disabled) {
       client.stop();
     }
   }
