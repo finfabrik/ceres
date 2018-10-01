@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class OrderbookSnapshot extends AbstractEvent implements MarketDataSnapshot {
+public class OrderbookSnapshot extends AbstractEvent implements MarketDataSnapshot<OrderInfo> {
 
-    private String symbol;
-    private long sequence;
-    private List<OrderInfo> ask;
-    private List<OrderInfo> bid;
+    private final String symbol;
+    private final long sequence;
+    private final List<OrderInfo> ask;
+    private final List<OrderInfo> bid;
+    private final long receivedTime;
 
     @Override
     public long getSequence() {
@@ -36,18 +37,23 @@ public class OrderbookSnapshot extends AbstractEvent implements MarketDataSnapsh
         return symbol;
     }
 
-    private OrderbookSnapshot(String symbol, long sequence, List<OrderInfo> ask, List<OrderInfo> bid){
+    public long getTime() {
+        return receivedTime;
+    }
+
+    private OrderbookSnapshot(String symbol, long sequence, List<OrderInfo> ask, List<OrderInfo> bid, long receivedTime){
         super(EventType.ORDERBOOK_SNAPSHOT.getType());
         this.symbol = symbol;
         this.sequence = sequence;
         this.ask = ask;
         this.bid = bid;
+        this.receivedTime = receivedTime;
     }
 
-    public static OrderbookSnapshot parse(String symbol, long sequence, JsonArray asksArray, JsonArray bidsArray ){
+    public static OrderbookSnapshot parse(String symbol, long sequence, JsonArray asksArray, JsonArray bidsArray, long receivedTime ){
         List<OrderInfo> ask = StreamSupport.stream(asksArray.spliterator(), false).map(elm -> new OrderRecord(DecimalNumber.fromBD(elm.getAsJsonObject().get("price").getAsBigDecimal()), DecimalNumber.fromBD(elm.getAsJsonObject().get("size").getAsBigDecimal()), OrderInfo.Side.SELL)).collect(Collectors.toList());
         List<OrderInfo> bid = StreamSupport.stream(bidsArray.spliterator(), false).map(elm -> new OrderRecord(DecimalNumber.fromBD(elm.getAsJsonObject().get("price").getAsBigDecimal()), DecimalNumber.fromBD(elm.getAsJsonObject().get("size").getAsBigDecimal()), OrderInfo.Side.BUY)).collect(Collectors.toList());
-        return new OrderbookSnapshot(symbol, sequence, ask, bid);
+        return new OrderbookSnapshot(symbol, sequence, ask, bid, receivedTime);
     }
 
 }

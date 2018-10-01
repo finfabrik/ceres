@@ -4,11 +4,7 @@ import com.blokaly.ceres.hitbtc.data.OrderbookNotification;
 import com.blokaly.ceres.hitbtc.data.OrderbookSnapshot;
 import com.blokaly.ceres.hitbtc.data.Trades;
 import com.blokaly.ceres.hitbtc.event.ErrorEvent;
-import com.blokaly.ceres.hitbtc.event.OrderBookRequestEvent;
 import com.blokaly.ceres.hitbtc.event.SubscribedEvent;
-import com.blokaly.ceres.hitbtc.event.TradeSRequestEvent;
-import com.blokaly.ceres.orderbook.PriceBasedOrderBook;
-import com.blokaly.ceres.orderbook.TopOfBookProcessor;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -22,20 +18,17 @@ public class MessageHandlerImpl implements MessageHandler {
   private final Gson gson;
   private final Provider<HitbtcClient> clientProvider;
   private final OrderBookHandler orderBookHandler;
-  private final TopOfBookProcessor producer;
   private final TradesHandler tradesHandler;
 
   @Inject
   public MessageHandlerImpl(Gson gson,
                             Provider<HitbtcClient> clientProvider,
                             OrderBookHandler orderBookHandler,
-                            TopOfBookProcessor producer,
                             TradesHandler tradesHandler
                             ) {
     this.gson = gson;
     this.clientProvider = clientProvider;
     this.orderBookHandler = orderBookHandler;
-    this.producer = producer;
     this.tradesHandler = tradesHandler;
 
   }
@@ -53,26 +46,12 @@ public class MessageHandlerImpl implements MessageHandler {
 
   @Override
   public void onMessage(OrderbookSnapshot snapshot) {
-    String symbol = snapshot.getSymbol();
-    PriceBasedOrderBook orderBook = orderBookHandler.get(symbol);
-    if (orderBook == null) {
-      throw new IllegalStateException("No order book for channel " + symbol);
-    }
-    orderBook.clear();
-    orderBook.processSnapshot(snapshot);
-    producer.process(orderBook);
+    orderBookHandler.processSnapshot(snapshot);
   }
 
   @Override
   public void onMessage(OrderbookNotification update) {
-    String symbol = update.getSymbol();
-    PriceBasedOrderBook orderBook = orderBookHandler.get(symbol);
-    if (orderBook == null) {
-      throw new IllegalStateException("No order book for channel " + symbol);
-    }
-    orderBook.processIncrementalUpdate(update.getDeletion());
-    orderBook.processIncrementalUpdate(update.getUpdate());
-    producer.process(orderBook);
+    orderBookHandler.processIncremental(update);
   }
 
   @Override

@@ -100,6 +100,7 @@ public class OrderBookHandler {
     ses.execute(()->{
       book.processIncrementalUpdate(incremental);
       publishDelta(incremental.getTime(), book);
+      book.clearDelta();
     });
   }
 

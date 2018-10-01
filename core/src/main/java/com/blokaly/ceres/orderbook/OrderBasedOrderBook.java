@@ -88,7 +88,7 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
     }
 
     LOGGER.debug("processing market data: {}", incremental);
-    delta.clear();
+
     switch (incremental.type()) {
       case NEW:
         incremental.orderInfos().forEach(this::processNewOrder);
@@ -108,6 +108,10 @@ public class OrderBasedOrderBook implements OrderBook<IdBasedOrderInfo>, TopOfBo
 
   public Collection<DeltaLevel> getDelta() {
     return delta.values();
+  }
+
+  public void clearDelta() {
+    delta.clear();
   }
 
   public long getLastUpdateTime() {

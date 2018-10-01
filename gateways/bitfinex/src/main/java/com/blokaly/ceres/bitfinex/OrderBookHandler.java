@@ -137,6 +137,7 @@ public class OrderBookHandler {
       book.processIncrementalUpdate(refresh);
       book.setLastUpdateTime(refresh.getTime());
       publishDelta(book);
+      book.clearDelta();
     });
 
     tobProcessor.process(book);

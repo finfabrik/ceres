@@ -117,7 +117,7 @@ public class PriceBasedOrderBook implements OrderBook<OrderInfo>, TopOfBook {
     }
 
     LOGGER.debug("processing market data: {}", incremental);
-    delta.clear();
+
     switch (incremental.type()) {
       case NEW:
       case UPDATE:
@@ -135,6 +135,10 @@ public class PriceBasedOrderBook implements OrderBook<OrderInfo>, TopOfBook {
 
   public long getLastUpdateTime() {
     return lastUpdTime;
+  }
+
+  public void clearDelta() {
+    delta.clear();
   }
 
   public void setLastUpdateTime(long time) {
